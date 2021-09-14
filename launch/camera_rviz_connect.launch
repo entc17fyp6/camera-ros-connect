@@ -3,12 +3,14 @@
     <arg name="lanes" default="true" />
     <arg name="road_markings" default="true" />
     <arg name="traffic_signs_and_traffic_lights" default="true" />
-    <arg name="visualize" default="true" />
+    <arg name="visualize" default="false" />
     <arg name="visualize2" default="true" />
     <arg name="feeder_start_delay" default="20.0" />
     <arg name="input_video" default="/home/samare/Desktop/1.Welcome to the self driving cars specialization.mp4"/>
     <arg name="save_output" default="false" />
     <arg name="output_video" default="/home/samare/Desktop/2_introduction.mp4"/>
+	<arg name="record_camera" default= "false"/>
+	<arg name="visualize_rosbag_content" default="true"/>
     <!-- <arg name="stream_output" default="false"/> -->
 
     <param name="input_video" value="$(arg input_video)"/>
@@ -59,6 +61,18 @@
 	  	  output="screen"
                   args="-d /home/samare/catkin_ws/src/camera_rviz_connect/rviz/config.rviz"
                   launch-prefix="bash -c 'sleep $(arg feeder_start_delay); $0 $@' " 
+	></node>
+
+	<node if="$(arg visualize_rosbag_content)" pkg="camera_rviz_connect"
+	  	  type="visualizer_camera_output.py"
+	  	  name="visualizer_camera_output"
+	  	  output="screen" 
+	></node>
+
+	<node if="$(arg record_camera)" pkg= "rosbag"
+		type="record"
+		name="record"
+		args="-O /home/samare/bagfiles/camera_record /pylon_camera_node/image_raw/compressed"
 	></node>
 
     <!-- <node if="$(arg stream_output)" pkg="static_object_detector_stage2"
