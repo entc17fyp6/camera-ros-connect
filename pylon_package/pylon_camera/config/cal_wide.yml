@@ -1,0 +1,20 @@
+image_width: 1920
+image_height: 1080
+camera_name: Wide
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [592.975666, 0, 912.75057, 0, 594.891709, 528.739371, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.023265, -0.006685, 0.00114, -0.009053, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [595.33075, 0, 864.680221, 0, 0, 617.862427, 530.536908, 0, 0, 0, 1, 0]
