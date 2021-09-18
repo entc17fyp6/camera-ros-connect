@@ -1,8 +1,0 @@
-prefix=/home/samare/catkin_ws/src/camera_rviz_connect/build/devel
-
-Name: camera_rviz_connect
-Description: Description of camera_rviz_connect
-Version: 0.0.0
-Cflags: -I/home/samare/catkin_ws/src/camera_rviz_connect/build/devel/include
-Libs: -L${prefix}/lib 
-Requires: message_runtime
