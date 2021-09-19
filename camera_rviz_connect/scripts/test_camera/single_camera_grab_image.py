@@ -6,12 +6,25 @@ import time
 from datetime import datetime
 import cv2
 
+import rospy
+from sensor_msgs.msg import Image as CameraImage
+
 width = 1080
 height = 1920
 fps = 30
+shold_save_video = False
 
 output_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc(*'MJPG'), fps, (width,height))
 
+input_frame_publisher = rospy.Publisher('/input_frame',SensorImage,queue_size=1)
+rospy.init_node('image_feeder_node', anonymous=True)
+
+def publish_image(frame):
+    frame = draw_time_date(frame)
+    input_frame_publisher.publish(frame)
+    if (shold_save_video):
+        save_video(frame)
+    return
 
 def draw_time_date(frame):
 
@@ -36,8 +49,7 @@ def save_video(frame):
     frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
     frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
 
-    frame = draw_time_date(frame)
-    # output_video.write(frame)
+    output_video.write(frame)
     return
 
 def initialize_cam(cam):
