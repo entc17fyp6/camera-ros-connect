@@ -75,7 +75,7 @@ class FFMPEG_VideoWriter:
             '-f', 'rawvideo',
             '-vcodec', 'rawvideo',
             '-s', '%dx%d' % (size[1], size[0]),
-            '-pix_fmt', pixfmt,
+            '-pixel_format', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
         ]
@@ -192,21 +192,24 @@ if __name__ == '__main__':
     cam = py.InstantCamera(py.TlFactory.GetInstance().CreateFirstDevice())
     cam.Open()
 
-    cam.PixelFormat = 'YCbCr422_8'
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
     cam.ExposureAuto = 'Off'
-    cam.PixelFormat = 'YCbCr422_8'
+    # cam.PixelFormat = 'YCbCr422_8'
+    cam.PixelFormat = 'BayerGB8'
     cam.ExposureTime = 30000
     cam.AcquisitionFrameRate = 30
+    cam.BslBrightness = 0.4
+    cam.BslContrast = 0.4
+
     print(cam.ResultingFrameRate.Value)
 
     converter = py.ImageFormatConverter()
     converter.OutputPixelFormat = py.PixelType_RGB8packed
     converter.OutputBitAlignment = "MsbAligned"
 
-    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="uyvy422", preset= 'ultrafast') as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="bayer_gbrg8", codec="libx264", preset= 'ultrafast') as writer:
 
         cam.StartGrabbingMax(1000)
         while cam.IsGrabbing():
