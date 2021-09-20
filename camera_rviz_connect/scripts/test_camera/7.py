@@ -206,12 +206,11 @@ if __name__ == '__main__':
     converter.OutputPixelFormat = py.PixelType_RGB8packed
     converter.OutputBitAlignment = "MsbAligned"
 
-    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=20, pixfmt="rgba") as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="uyvy422", preset= 'ultrafast') as writer:
 
         cam.StartGrabbingMax(1000)
         while cam.IsGrabbing():
             res = cam.RetrieveResult(1000)
-            print(res.Array.shape)
             # if (~converter.ImageHasDestinationFormat(res)):
             #     grabResult = converter.Convert(res)
             writer.write_frame(res.Array)
