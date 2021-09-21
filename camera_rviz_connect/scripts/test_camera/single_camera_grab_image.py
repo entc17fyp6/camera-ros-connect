@@ -80,7 +80,7 @@ class FFMPEG_VideoWriter:
       veryfast, faster, fast, medium (default), slow, slower, veryslow,
       placebo. 
 
-      This affects only for the libx264, libx265 libxvid etc.
+      This and affects only for the libx264, libx265 libxvid etc. ('-crf' also affect these types)
       for mjpeg, mpeg4 etc. use -q:v factor
 
     bitrate
@@ -94,7 +94,7 @@ class FFMPEG_VideoWriter:
     """
 
     def __init__(self, filename, size, fps, codec="libx264", audiofile=None,
-                 preset="medium", bitrate=None, pixfmt="rgba",
+                 preset="medium", bitrate=None, pixfmt="rgba", quality = '11',crf = '20',
                  logfile=None, threads=None, ffmpeg_params=None):
 
         if logfile is None:
@@ -118,8 +118,8 @@ class FFMPEG_VideoWriter:
         ]
         cmd.extend([
             '-vcodec', codec,
-            # '-crf', '28',
-            '-q:v', '11',
+            '-q:v', quality,
+            '-crf', crf,
             '-preset', preset,
         ])
         if ffmpeg_params is not None:
@@ -294,7 +294,7 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", preset= 'ultrafast') as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
