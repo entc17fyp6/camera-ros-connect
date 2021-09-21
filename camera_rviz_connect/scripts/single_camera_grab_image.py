@@ -14,13 +14,8 @@ height = 1920
 fps = 30
 shold_save_video = False
 
-output_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc(*'MJPG'), fps, (width,height))
-
-input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
-rospy.init_node('image_feeder_node', anonymous=True)
-
 def publish_image(frame):
-
+    
     frame = draw_time_date(frame)
 
     input_frame = CameraImage()
@@ -36,7 +31,7 @@ def publish_image(frame):
     
     if (shold_save_video):
         save_video(frame)
-        
+
     frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
     cv2.namedWindow("Input")
     cv2.imshow("Input", frame)
@@ -130,3 +125,26 @@ cam.Open()
 initialize_cam(cam)
 
 BackgroundLoop(cam)
+
+def single_camera_grab_image():
+
+    global output_video, input_frame_publisher
+
+    output_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc(*'MJPG'), fps, (width,height))
+
+    input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
+    rospy.init_node('image_feeder_node', anonymous=True)
+
+    tlf = py.TlFactory.GetInstance()
+    cam = py.InstantCamera(tlf.CreateFirstDevice())
+    cam.Open()
+    initialize_cam(cam)
+
+    BackgroundLoop(cam)
+
+
+if __name__ == '__main__':
+    try:
+        single_camera_grab_image()
+    except rospy.ROSInternalException:
+        pass
