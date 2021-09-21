@@ -64,6 +64,12 @@ class FFMPEG_VideoWriter:
       another pixel format is used, and this can cause problem in some
       video readers.
 
+      Experimentally found best options 
+        libx264         - quality - very good     speed - ~30fps achieved       size - 16.74 GB/h
+        libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
+        mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
+        mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
+ -
     audiofile
       Optional: The name of an audio file that will be incorporated
       to the video.
@@ -72,7 +78,10 @@ class FFMPEG_VideoWriter:
       Sets the time that FFMPEG will take to compress the video. The slower,
       the better the compression rate. Possibilities are: ultrafast,superfast,
       veryfast, faster, fast, medium (default), slow, slower, veryslow,
-      placebo.
+      placebo. 
+
+      This affects only for the libx264, libx265 libxvid etc.
+      for mjpeg, mpeg4 etc. use -q:v factor
 
     bitrate
       Only relevant for codecs which accept a bitrate. "5000k" offers
@@ -109,6 +118,8 @@ class FFMPEG_VideoWriter:
         ]
         cmd.extend([
             '-vcodec', codec,
+            # '-crf', '28',
+            '-q:v', '11',
             '-preset', preset,
         ])
         if ffmpeg_params is not None:
@@ -283,7 +294,7 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="yuv420p", codec="libx264", preset= 'ultrafast') as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", preset= 'ultrafast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
