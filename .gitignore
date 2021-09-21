@@ -18,3 +18,4 @@ CATKIN_IGNORE
 *.pyc
 *.save
 *.avi
+*.mp4

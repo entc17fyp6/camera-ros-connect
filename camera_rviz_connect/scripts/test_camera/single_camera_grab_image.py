@@ -16,10 +16,10 @@ height = 1920
 fps = 30
 shold_save_video = False
 
-output_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc(*'MJPG'), fps, (width,height))
-
 # input_frame_publisher = rospy.Publisher('/input_frame',SensorImage,queue_size=1)
 # rospy.init_node('image_feeder_node', anonymous=True)
+
+### this FFMPEG_VideoWriter class is copied and modified from https://github.com/basler/pypylon/issues/113 
 
 # def publish_image(frame):
 #     frame = draw_time_date(frame)
@@ -31,6 +31,7 @@ output_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc(*'MJPG'), fp
 ### for demonstration of how to write video data
 ### this class is an excerpt from the project moviepy https://github.com/Zulko/moviepy.git moviepy/video/io/ffmpeg_writer.py
 ###
+
 class FFMPEG_VideoWriter:
     """ A class for FFMPEG-based video writing.
 
@@ -209,7 +210,7 @@ class FFMPEG_VideoWriter:
 def draw_time_date(frame):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    org = (1150, 50)
+    org = (1450, 50)
     fontScale = 1
     color = (255, 255, 0)
     thickness = 2
@@ -218,18 +219,18 @@ def draw_time_date(frame):
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
     frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-    # Attempt to display using cv2 (doesn't work)
-    cv2.namedWindow("Input")
-    cv2.imshow("Input", frame)
-    cv2.waitKey(1)
+    # cv2.namedWindow("Input")
+    # cv2.imshow("Input", frame)
+    # cv2.waitKey(1)
     return frame
 
 def save_video(frame):
-    frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
-    frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
+    # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
+    # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
     frame = draw_time_date(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
+    writer.write_frame(frame)
     # output_video.write(frame)
     return
 
@@ -239,8 +240,11 @@ def initialize_cam(cam):
 
     cam.ExposureAuto = 'Off'
     cam.PixelFormat = 'YCbCr422_8'
+    # cam.PixelFormat = 'BayerGB8'
     cam.ExposureTime = 30000
     cam.AcquisitionFrameRate = fps
+    # cam.BslBrightness = 0.4
+    # cam.BslContrast = 0.4
 
 class ImageHandler (py.ImageEventHandler):
     def __init__(self, *args):
@@ -256,8 +260,8 @@ class ImageHandler (py.ImageEventHandler):
         try:
             if grabResult.GrabSucceeded():
                 
-                # if (~self.converter.ImageHasDestinationFormat(grabResult)):
-                #     grabResult = self.converter.Convert(grabResult)
+                if (~self.converter.ImageHasDestinationFormat(grabResult)):
+                    grabResult = self.converter.Convert(grabResult)
                     
                 img = grabResult.Array
                 time_new = time.time()
@@ -266,8 +270,8 @@ class ImageHandler (py.ImageEventHandler):
                 self.time_old = time_new
                 # cv2.imwrite(str(self.frame_count)+'.jpg',img)
                 self.frame_count += 1
-                # save_video(img)
-                writer.write_frame(img)
+                save_video(img)
+                # writer.write_frame(img)
             else:
                 raise RuntimeError("Grab failed")
         except Exception as e:
@@ -279,7 +283,7 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="uyvy422", preset= 'ultrafast') as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="yuv420p", codec="libx264", preset= 'ultrafast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
