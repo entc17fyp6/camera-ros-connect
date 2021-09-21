@@ -1,55 +1,9 @@
-import pypylon.pylon as py
-import numpy as np
-import matplotlib.pyplot as plt
-import traceback
-import time
-from datetime import datetime
-import cv2
 import subprocess as sp
 import os
-
-import rospy
-from sensor_msgs.msg import Image as CameraImage
-
-width = 1080
-height = 1920
-fps = 30
-shold_save_video = False
-
-input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
-rospy.init_node('image_feeder_node', anonymous=True)
-
-def publish_image(frame):
-
-    frame = draw_time_date(frame)
-
-    input_frame = CameraImage()
-    input_frame.header.stamp = rospy.Time.now()
-    input_frame.height = frame.shape[0]
-    input_frame.width = frame.shape[1]
-    input_frame.encoding = "rgb8"
-    input_frame.is_bigendian = False
-    input_frame.step = 3* frame.shape[1]
-    input_frame.data = frame.tobytes()
-
-    input_frame_publisher.publish(input_frame)
-    
-
-        
-    frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    cv2.namedWindow("Input")
-    cv2.imshow("Input", frame)
-    cv2.waitKey(1)
-
-    return
-
-
-### this FFMPEG_VideoWriter class is copied and modified from https://github.com/basler/pypylon/issues/113 
 
 ### for demonstration of how to write video data
 ### this class is an excerpt from the project moviepy https://github.com/Zulko/moviepy.git moviepy/video/io/ffmpeg_writer.py
 ###
-
 class FFMPEG_VideoWriter:
     """ A class for FFMPEG-based video writing.
 
@@ -82,12 +36,6 @@ class FFMPEG_VideoWriter:
       another pixel format is used, and this can cause problem in some
       video readers.
 
-      Experimentally found best options 
-        libx264         - quality - very good     speed - ~30fps achieved       size - 16.74 GB/h
-        libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
-        mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
-        mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
- -
     audiofile
       Optional: The name of an audio file that will be incorporated
       to the video.
@@ -96,10 +44,7 @@ class FFMPEG_VideoWriter:
       Sets the time that FFMPEG will take to compress the video. The slower,
       the better the compression rate. Possibilities are: ultrafast,superfast,
       veryfast, faster, fast, medium (default), slow, slower, veryslow,
-      placebo. 
-
-      This and affects only for the libx264, libx265 libxvid etc. ('-crf' also affect these types)
-      for mjpeg, mpeg4 etc. use -q:v factor
+      placebo.
 
     bitrate
       Only relevant for codecs which accept a bitrate. "5000k" offers
@@ -112,7 +57,7 @@ class FFMPEG_VideoWriter:
     """
 
     def __init__(self, filename, size, fps, codec="libx264", audiofile=None,
-                 preset="medium", bitrate=None, pixfmt="rgba", quality = '11',crf = '20',
+                 preset="medium", bitrate=None, pixfmt="rgba",
                  logfile=None, threads=None, ffmpeg_params=None):
 
         if logfile is None:
@@ -130,14 +75,12 @@ class FFMPEG_VideoWriter:
             '-f', 'rawvideo',
             '-vcodec', 'rawvideo',
             '-s', '%dx%d' % (size[1], size[0]),
-            '-pix_fmt', pixfmt,
+            '-pixel_format', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
         ]
         cmd.extend([
             '-vcodec', codec,
-            '-q:v', quality,
-            '-crf', crf,
             '-preset', preset,
         ])
         if ffmpeg_params is not None:
@@ -236,102 +179,43 @@ class FFMPEG_VideoWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-def draw_time_date(frame):
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    org = (1450, 50)
-    fontScale = 1
-    color = (255, 255, 0)
-    thickness = 2
 
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
-    frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
-    # cv2.namedWindow("Input")
-    # cv2.imshow("Input", frame)
-    # cv2.waitKey(1)
-    return frame
+if __name__ == '__main__':
 
-def save_video(frame):
-    # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
-    # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    frame = draw_time_date(frame)
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+    ## sample program for a GEV camera
+    ## target is to write the YUV video data without further conversion
+    ##
+    import pypylon.pylon as py
 
-    writer.write_frame(frame)
-    # output_video.write(frame)
-    return
+    cam = py.InstantCamera(py.TlFactory.GetInstance().CreateFirstDevice())
+    cam.Open()
 
-def initialize_cam(cam):
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
     cam.ExposureAuto = 'Off'
-    cam.PixelFormat = 'YCbCr422_8'
-    # cam.PixelFormat = 'BayerGB8'
+    # cam.PixelFormat = 'YCbCr422_8'
+    cam.PixelFormat = 'BayerGB8'
     cam.ExposureTime = 30000
-    cam.AcquisitionFrameRate = fps
-    # cam.BslBrightness = 0.4
-    # cam.BslContrast = 0.4
+    cam.AcquisitionFrameRate = 30
+    cam.BslBrightness = 0.4
+    cam.BslContrast = 0.4
 
-class ImageHandler (py.ImageEventHandler):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.time_old = time.time()
-        self.frame_count = 0
+    print(cam.ResultingFrameRate.Value)
 
-        self.converter = py.ImageFormatConverter()
-        self.converter.OutputPixelFormat = py.PixelType_RGB8packed
-        self.converter.OutputBitAlignment = "MsbAligned"
-    
-    def OnImageGrabbed(self, camera, grabResult):
-        try:
-            if grabResult.GrabSucceeded():
-                
-                if (~self.converter.ImageHasDestinationFormat(grabResult)):
-                    grabResult = self.converter.Convert(grabResult)
-                    
-                img = grabResult.Array
-                time_new = time.time()
-                rate = 1/(time_new-self.time_old)
-                print(rate)
-                self.time_old = time_new
-                self.frame_count += 1
-                save_video(img)
-                # writer.write_frame(img)
-            else:
-                raise RuntimeError("Grab failed")
-        except Exception as e:
-            traceback.print_exc()
+    converter = py.ImageFormatConverter()
+    converter.OutputPixelFormat = py.PixelType_RGB8packed
+    converter.OutputBitAlignment = "MsbAligned"
 
-def BackgroundLoop(cam):
-    handler = ImageHandler()
+    with FFMPEG_VideoWriter("ffmpeg_demo.avi",(cam.Height.Value, cam.Width.Value), fps=30, pixfmt="bayer_gbrg8", codec="libx264", preset= 'ultrafast') as writer:
 
-    cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
-
-    global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') as writer:
-        # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
-        cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
-
-        try:
-            while cam.IsGrabbing():
-                pass
-        except KeyboardInterrupt:
-            pass
-
-        cam.StopGrabbing()
-        cam.DeregisterImageEventHandler(handler)
-        cam.Close()
-        cv2.destroyAllWindows()
-
-    # return handler.img_sum
-
-
-tlf = py.TlFactory.GetInstance()
-cam = py.InstantCamera(tlf.CreateFirstDevice())
-cam.Open()
-initialize_cam(cam)
-
-BackgroundLoop(cam)
+        cam.StartGrabbingMax(1000)
+        while cam.IsGrabbing():
+            res = cam.RetrieveResult(1000)
+            # if (~converter.ImageHasDestinationFormat(res)):
+            #     grabResult = converter.Convert(res)
+            writer.write_frame(res.Array)
+            print(res.BlockID)
+            res.Release()
