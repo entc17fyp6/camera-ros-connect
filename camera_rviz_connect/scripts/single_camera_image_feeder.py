@@ -14,34 +14,35 @@ from sensor_msgs.msg import Image as CameraImage
 width = 1080
 height = 1920
 fps = 30
-shold_save_video = True
+shold_save_video = False
+output_video = "camera_out.mp4"
 
 # input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
 # rospy.init_node('image_feeder_node', anonymous=True)
 
-# def publish_image(frame):
+def publish_image(frame):
 
-#     frame = draw_time_date(frame)
+    frame = draw_time_date(frame)
 
-#     input_frame = CameraImage()
-#     input_frame.header.stamp = rospy.Time.now()
-#     input_frame.height = frame.shape[0]
-#     input_frame.width = frame.shape[1]
-#     input_frame.encoding = "rgb8"
-#     input_frame.is_bigendian = False
-#     input_frame.step = 3* frame.shape[1]
-#     input_frame.data = frame.tobytes()
+    input_frame = CameraImage()
+    input_frame.header.stamp = rospy.Time.now()
+    input_frame.height = frame.shape[0]
+    input_frame.width = frame.shape[1]
+    input_frame.encoding = "rgb8"
+    input_frame.is_bigendian = False
+    input_frame.step = 3* frame.shape[1]
+    input_frame.data = frame.tobytes()
 
-#     input_frame_publisher.publish(input_frame)
+    input_frame_publisher.publish(input_frame)
     
 
         
-#     frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-#     cv2.namedWindow("Input")
-#     cv2.imshow("Input", frame)
-#     cv2.waitKey(1)
+    frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
+    cv2.namedWindow("Input")
+    cv2.imshow("Input", frame)
+    cv2.waitKey(1)
 
-#     return
+    return
 
 
 ### this FFMPEG_VideoWriter class is copied and modified from https://github.com/basler/pypylon/issues/113 
@@ -279,7 +280,6 @@ class ImageHandler (py.ImageEventHandler):
     def __init__(self, *args):
         super().__init__(*args)
         self.time_old = time.time()
-        self.frame_count = 0
 
         self.converter = py.ImageFormatConverter()
         self.converter.OutputPixelFormat = py.PixelType_RGB8packed
@@ -297,9 +297,11 @@ class ImageHandler (py.ImageEventHandler):
                 rate = 1/(time_new-self.time_old)
                 print(rate)
                 self.time_old = time_new
-                self.frame_count += 1
-                save_video(img)
-                # writer.write_frame(img)
+                if (shold_save_video):
+                    save_video(img)
+                else:
+                    publish_image(img)
+                    
             else:
                 raise RuntimeError("Grab failed")
         except Exception as e:
@@ -311,7 +313,7 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') as writer:
+    with FFMPEG_VideoWriter(output_video,(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
@@ -328,10 +330,24 @@ def BackgroundLoop(cam):
 
     # return handler.img_sum
 
+def single_camera_image_feeder():
 
-tlf = py.TlFactory.GetInstance()
-cam = py.InstantCamera(tlf.CreateFirstDevice())
-cam.Open()
-initialize_cam(cam)
+    global input_frame_publisher
+    input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
+    rospy.init_node('image_feeder_node', anonymous=True)
 
-BackgroundLoop(cam)
+    tlf = py.TlFactory.GetInstance()
+    cam = py.InstantCamera(tlf.CreateFirstDevice())
+    cam.Open()
+    initialize_cam(cam)
+
+    BackgroundLoop(cam)
+
+    return
+
+
+if __name__ == '__main__':
+    try:
+        single_camera_image_feeder()
+    except rospy.ROSInternalException:
+        pass

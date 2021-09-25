@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/samare/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/samare/catkin_ws/src/beginner_tutorials/include/**",
+        "/home/samare/catkin_ws/src/foobar/include/**",
+        "/home/samare/catkin_ws/src/camera_rviz_connect/pylon_package/pylon_camera/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}
