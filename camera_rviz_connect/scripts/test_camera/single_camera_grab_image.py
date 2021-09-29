@@ -137,9 +137,9 @@ class FFMPEG_VideoWriter:
         ]
         cmd.extend([
             '-vcodec', codec,
-            # '-q:v', quality,
-            # '-crf', crf,
-            # '-preset', preset,
+            '-q:v', quality,
+            '-crf', crf,
+            '-preset', preset,
         ])
         if ffmpeg_params is not None:
             cmd.extend(ffmpeg_params)
@@ -312,7 +312,7 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_nvenc", quality='30', preset= 'medium') as writer:
+    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
