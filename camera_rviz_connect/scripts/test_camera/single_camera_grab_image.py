@@ -119,9 +119,9 @@ class FFMPEG_VideoWriter:
         ]
         cmd.extend([
             '-vcodec', codec,
-            # '-q:v', quality,
+            '-q:v', quality,
             # '-crf', crf,
-            # '-preset', preset,
+            '-preset', preset,
         ])
         if ffmpeg_params is not None:
             cmd.extend(ffmpeg_params)
@@ -231,9 +231,9 @@ def draw_time_date(frame):
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
     frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
-    # cv2.namedWindow("Input")
-    # cv2.imshow("Input", frame)
-    # cv2.waitKey(1)
+    cv2.namedWindow("Input")
+    cv2.imshow("Input", frame)
+    cv2.waitKey(1)
     return frame
 
 def save_video(frame):
@@ -294,8 +294,11 @@ def BackgroundLoop(cam):
 
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y %H-%M")
+    video_name = dt_string+"_camera_out"
     global writer
-    with FFMPEG_VideoWriter("ffmpeg_demo.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_nvenc", quality='30', preset= 'medium') as writer:
+    with FFMPEG_VideoWriter(video_name+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 

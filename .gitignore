@@ -19,3 +19,4 @@ CATKIN_IGNORE
 *.save
 *.avi
 *.mp4
+*.zip
