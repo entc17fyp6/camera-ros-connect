@@ -8,29 +8,46 @@ import cv2
 import subprocess as sp
 import os
 
-# import rospy
-# from sensor_msgs.msg import Image as CameraImage
-
 width = 1080
 height = 1920
 fps = 30
-shold_save_video = False
 
-# input_frame_publisher = rospy.Publisher('/input_frame',SensorImage,queue_size=1)
-# rospy.init_node('image_feeder_node', anonymous=True)
 
-### this FFMPEG_VideoWriter class is copied and modified from https://github.com/basler/pypylon/issues/113 
+tlf = py.TlFactory.GetInstance()
+devices = tlf.EnumerateDevices()
+cam_count = len(devices)
 
-# def publish_image(frame):
-#     frame = draw_time_date(frame)
-#     input_frame_publisher.publish(frame)
-#     if (shold_save_video):
-#         save_video(frame)
-#     return
+for d in devices:
+    print(d.GetModelName(), d.GetUserDefinedName())
 
-### for demonstration of how to write video data
-### this class is an excerpt from the project moviepy https://github.com/Zulko/moviepy.git moviepy/video/io/ffmpeg_writer.py
-###
+cam_array = []
+for i in range (cam_count):
+    cam_array.append(py.InstantCamera(tlf.CreateDevice(devices[i])))
+
+
+for i in range(cam_count):
+    cam_array[i].Open()
+
+
+for idx, cam in enumerate(cam_array):
+    camera_name = cam.DeviceInfo.GetUserDefinedName()
+    print(f"set context {idx} for {camera_name} camera")
+    cam.SetCameraContext(idx)
+
+
+def initialize_cam(cam):
+    cam.UserSetSelector = 'Default'
+    cam.UserSetLoad.Execute()
+
+    cam.ExposureAuto = 'Off'
+    cam.PixelFormat = 'YCbCr422_8'
+    cam.ExposureTime = 1000
+    cam.AcquisitionFrameRate = fps
+
+
+for idx, cam in enumerate(cam_array):
+    initialize_cam(cam)
+
 
 class FFMPEG_VideoWriter:
     """ A class for FFMPEG-based video writing.
@@ -69,7 +86,6 @@ class FFMPEG_VideoWriter:
         libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
         mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
         mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
-        h264_qsv(-q:v=30) - quality - good        speed - ~30fps achieved       size - 1.6GB/h      -hardware acceleration
  -
     audiofile
       Optional: The name of an audio file that will be incorporated
@@ -120,7 +136,7 @@ class FFMPEG_VideoWriter:
         cmd.extend([
             '-vcodec', codec,
             '-q:v', quality,
-            # '-crf', crf,
+            '-crf', crf,
             '-preset', preset,
         ])
         if ffmpeg_params is not None:
@@ -219,10 +235,11 @@ class FFMPEG_VideoWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-def draw_time_date(frame):
+
+def draw_time_date(frame,cam_id):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    org = (1450, 50)
+    org = (1150, 50)
     fontScale = 1
     color = (255, 255, 0)
     thickness = 2
@@ -231,94 +248,108 @@ def draw_time_date(frame):
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
     frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
-    cv2.namedWindow("Input")
-    cv2.imshow("Input", frame)
-    cv2.waitKey(1)
+
+    # Attempt to display using cv2 (doesn't work)
+    # if (cam_id == 0):
+    #     cv2.namedWindow("1")
+    #     cv2.imshow("1", frame)
+    #     cv2.waitKey(1)
+    # else:
+    #     cv2.namedWindow("2")
+    #     cv2.imshow("2", frame)
+    #     cv2.waitKey(1)
+        
     return frame
 
-def save_video(frame):
+
+def save_video(frame,cam_id):
     # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
     # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    frame = draw_time_date(frame)
+    frame = draw_time_date(frame,cam_id)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
-    writer.write_frame(frame)
+    writer[cam_id].write_frame(frame)
     # output_video.write(frame)
     return
 
-def initialize_cam(cam):
-    cam.UserSetSelector = 'Default'
-    cam.UserSetLoad.Execute()
 
-    cam.ExposureAuto = 'Off'
-    cam.PixelFormat = 'YCbCr422_8'
-    # cam.PixelFormat = 'BayerGB8'
-    cam.ExposureTime = 500
-    cam.AcquisitionFrameRate = fps
-    # cam.BslBrightness = 0.4
-    # cam.BslContrast = 0.4
+converter = py.ImageFormatConverter()
+converter.OutputPixelFormat = py.PixelType_RGB8packed
+converter.OutputBitAlignment = "MsbAligned"
+
 
 class ImageHandler (py.ImageEventHandler):
     def __init__(self, *args):
         super().__init__(*args)
         self.time_old = time.time()
-        self.frame_count = 0
-
-        self.converter = py.ImageFormatConverter()
-        self.converter.OutputPixelFormat = py.PixelType_RGB8packed
-        self.converter.OutputBitAlignment = "MsbAligned"
+        self.time_new = 0
     
     def OnImageGrabbed(self, camera, grabResult):
         try:
             if grabResult.GrabSucceeded():
                 
-                if (~self.converter.ImageHasDestinationFormat(grabResult)):
-                    grabResult = self.converter.Convert(grabResult)
+                if (~converter.ImageHasDestinationFormat(grabResult)):
+                    grabResult = converter.Convert(grabResult)
                     
                 img = grabResult.Array
-                time_new = time.time()
-                rate = 1/(time_new-self.time_old)
-                print(rate)
-                self.time_old = time_new
-                # cv2.imwrite(str(self.frame_count)+'.jpg',img)
-                self.frame_count += 1
-                save_video(img)
-                # writer.write_frame(img)
+                cam_id = camera.CameraContext
+                self.time_new = time.time()
+                rate = 1/(self.time_new-self.time_old)
+                if (cam_id == 0):
+                    print("                     ",rate,cam_id)
+                else:
+                    print(rate, cam_id)
+                self.time_old = self.time_new
+                # img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB )
+                # cv2.namedWindow("Input")
+                # cv2.imshow("Input", img)
+                # cv2.waitKey(1)
+                save_video(img,cam_id)
             else:
                 raise RuntimeError("Grab failed")
         except Exception as e:
             traceback.print_exc()
 
-def BackgroundLoop(cam):
-    handler = ImageHandler()
 
-    cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
+def BackgroundLoop(cam_array):
 
+    handler_array = []
+    for i in range (cam_count):
+        handler_array.append(ImageHandler())
+
+    for cam in cam_array:
+        cam.RegisterImageEventHandler(handler_array[i], py.RegistrationMode_ReplaceAll, py.Cleanup_None)
+        
+
+
+    global writer
+    writer = []
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H-%M")
-    video_name = dt_string+"_camera_out"
-    global writer
-    with FFMPEG_VideoWriter(video_name+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
-        # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
+    video_name = dt_string+"_camera_"
+    for i in range(cam_count):
+        writer.append(FFMPEG_VideoWriter(video_name+str(i)+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast'))
+    # writer_1 = FFMPEG_VideoWriter("output_1.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast')
+    # writer_2 = FFMPEG_VideoWriter("output_2.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') 
+
+    # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
+    # cam_array.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
+    for cam in cam_array:
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
-        try:
-            while cam.IsGrabbing():
-                pass
-        except KeyboardInterrupt:
+    try:
+        while cam_array[0].IsGrabbing():
             pass
+    except KeyboardInterrupt:
+        pass
 
-        cam.StopGrabbing()
-        cam.DeregisterImageEventHandler(handler)
-        cam.Close()
-        cv2.destroyAllWindows()
+    # cam_array.StopGrabbing()
+    for i in range (cam_count):
+        cam_array[i].StopGrabbing()
+        cam_array[i].DeregisterImageEventHandler(handler_array[i])
+        writer[i].close()
+    # cam_array.Close()
+    cv2.destroyAllWindows()
+    return
 
-    # return handler.img_sum
-
-
-tlf = py.TlFactory.GetInstance()
-cam = py.InstantCamera(tlf.CreateFirstDevice())
-cam.Open()
-initialize_cam(cam)
-
-BackgroundLoop(cam)
+BackgroundLoop(cam_array)
