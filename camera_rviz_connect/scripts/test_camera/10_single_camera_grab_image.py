@@ -16,6 +16,8 @@ height = 1920
 fps = 30
 shold_save_video = False
 
+# camera_name = None
+
 # input_frame_publisher = rospy.Publisher('/input_frame',SensorImage,queue_size=1)
 # rospy.init_node('image_feeder_node', anonymous=True)
 
@@ -221,6 +223,10 @@ class FFMPEG_VideoWriter:
 
 def draw_time_date(frame):
 
+    if (camera_name == 'Narrow'):
+        M = cv2.getRotationMatrix2D((height/2,width/2), 180, 1.0)
+        frame = cv2.warpAffine(frame, M, (height,width))
+        
     font = cv2.FONT_HERSHEY_SIMPLEX
     org = (1450, 50)
     fontScale = 1
@@ -295,10 +301,9 @@ def BackgroundLoop(cam):
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
     now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y %H-%M")
-    video_name = dt_string+"_camera_out"
+    dt_string = now.strftime("%d-%m-%Y_%H-%M")
     global writer
-    with FFMPEG_VideoWriter(video_name+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
+    with FFMPEG_VideoWriter(dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
@@ -319,6 +324,10 @@ def BackgroundLoop(cam):
 tlf = py.TlFactory.GetInstance()
 cam = py.InstantCamera(tlf.CreateFirstDevice())
 cam.Open()
+
+camera_name = cam.DeviceInfo.GetUserDefinedName()
+print(f"connected to {camera_name} camera")
+
 initialize_cam(cam)
 
 BackgroundLoop(cam)

@@ -8,6 +8,8 @@ import cv2
 import subprocess as sp
 import os
 
+should_save_video = True
+
 width = 1080
 height = 1920
 fps = 30
@@ -29,10 +31,21 @@ for i in range(cam_count):
     cam_array[i].Open()
 
 
+narrow_cam_id = 0
+wide_cam_id = 1
+narrow_cam_connected = False
+wide_cam_connected = False
+
 for idx, cam in enumerate(cam_array):
     camera_name = cam.DeviceInfo.GetUserDefinedName()
     print(f"set context {idx} for {camera_name} camera")
-    cam.SetCameraContext(idx)
+    if (camera_name == 'Wide'):
+        cam.SetCameraContext(wide_cam_id)
+        wide_cam_connected = True
+    else:
+        cam.SetCameraContext(narrow_cam_id)
+        narrow_cam_connected = True
+
 
 
 def initialize_cam(cam):
@@ -238,6 +251,9 @@ class FFMPEG_VideoWriter:
 
 def draw_time_date(frame,cam_id):
 
+    if (cam_id == narrow_cam_id):
+        M = cv2.getRotationMatrix2D((height/2,width/2), 180, 1.0)
+        frame = cv2.warpAffine(frame, M, (height,width))
     font = cv2.FONT_HERSHEY_SIMPLEX
     org = (1150, 50)
     fontScale = 1
@@ -268,8 +284,12 @@ def save_video(frame,cam_id):
     frame = draw_time_date(frame,cam_id)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
-    writer[cam_id].write_frame(frame)
-    # output_video.write(frame)
+    if (should_save_video):
+        writer_dict[str(cam_id)].write_frame(frame)
+    else:
+        cv2.namedWindow(str(cam_id))
+        cv2.imshow(str(cam_id), frame)
+        cv2.waitKey(1)
     return
 
 
@@ -322,13 +342,20 @@ def BackgroundLoop(cam_array):
         
 
 
-    global writer
-    writer = []
+    # global writer
+    # writer = []
+    global writer_dict
+    writer_dict = {}
     now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y %H-%M")
-    video_name = dt_string+"_camera_"
-    for i in range(cam_count):
-        writer.append(FFMPEG_VideoWriter(video_name+str(i)+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast'))
+    dt_string = now.strftime("%d-%m-%Y_%H-%M")
+    # video_name = dt_string+"_camera_"
+
+    if (wide_cam_connected):
+        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter(dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast')
+    if (narrow_cam_connected):
+        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter(dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast')
+    # for i in range(cam_count):
+    #     writer.append(FFMPEG_VideoWriter(video_name+str(i)+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast'))
     # writer_1 = FFMPEG_VideoWriter("output_1.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast')
     # writer_2 = FFMPEG_VideoWriter("output_2.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast') 
 
@@ -347,7 +374,11 @@ def BackgroundLoop(cam_array):
     for i in range (cam_count):
         cam_array[i].StopGrabbing()
         cam_array[i].DeregisterImageEventHandler(handler_array[i])
-        writer[i].close()
+        # writer[i].close()
+    if (wide_cam_connected):
+        writer_dict[str(wide_cam_id)].close()
+    if (narrow_cam_connected):
+        writer_dict[str(narrow_cam_id)].close()
     # cam_array.Close()
     cv2.destroyAllWindows()
     return
