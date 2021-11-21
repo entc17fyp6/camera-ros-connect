@@ -20,3 +20,5 @@ CATKIN_IGNORE
 *.avi
 *.mp4
 *.zip
+*.jpg
+*.png

@@ -14,7 +14,7 @@ import os
 width = 1080
 height = 1920
 fps = 30
-shold_save_video = False
+shold_save_video = True
 
 # camera_name = None
 
@@ -107,7 +107,9 @@ class FFMPEG_VideoWriter:
         self.codec = codec
         self.ext = self.filename.split(".")[-1]
 
-        # order is important
+        
+        # order is important\
+        # drawtext = "drawtext=fontfile=DejaVuSans: text='Random Name': fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: boxborderw=5: x=20: y=20"
         cmd = [
             "ffmpeg",
             '-y',
@@ -222,10 +224,6 @@ class FFMPEG_VideoWriter:
         self.close()
 
 def draw_time_date(frame):
-
-    if (camera_name == 'Narrow'):
-        M = cv2.getRotationMatrix2D((height/2,width/2), 180, 1.0)
-        frame = cv2.warpAffine(frame, M, (height,width))
         
     font = cv2.FONT_HERSHEY_SIMPLEX
     org = (1450, 50)
@@ -252,17 +250,28 @@ def save_video(frame):
     # output_video.write(frame)
     return
 
-def initialize_cam(cam):
+def initialize_cam(cam,camera_name):
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
-    cam.ExposureAuto = 'Off'
-    cam.PixelFormat = 'YCbCr422_8'
-    # cam.PixelFormat = 'BayerGB8'
-    cam.ExposureTime = 500
+    # cam.PixelFormat = 'YCbCr422_8'
+    # cam.ExposureTime = 200
+    cam.PixelFormat = 'BayerGB8'
+    cam.ExposureTime = 300
     cam.AcquisitionFrameRate = fps
     # cam.BslBrightness = 0.4
     # cam.BslContrast = 0.4
+    if (camera_name == 'Narrow'):
+        cam.ReverseX = True
+        cam.ReverseY = True
+        cam.ExposureAuto = 'Continuous'
+        cam.AutoExposureTimeUpperLimit = 400
+        cam.AutoGainUpperLimit = 5.0
+    if (camera_name == 'Wide'):
+        cam.ExposureAuto = 'Continuous'
+        cam.AutoExposureTimeUpperLimit = 500
+        cam.AutoGainUpperLimit = 5.0
+        
 
 class ImageHandler (py.ImageEventHandler):
     def __init__(self, *args):
@@ -303,7 +312,7 @@ def BackgroundLoop(cam):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M")
     global writer
-    with FFMPEG_VideoWriter(dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
+    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
@@ -328,6 +337,6 @@ cam.Open()
 camera_name = cam.DeviceInfo.GetUserDefinedName()
 print(f"connected to {camera_name} camera")
 
-initialize_cam(cam)
+initialize_cam(cam, camera_name)
 
 BackgroundLoop(cam)

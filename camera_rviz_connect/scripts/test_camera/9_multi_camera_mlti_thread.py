@@ -48,18 +48,33 @@ for idx, cam in enumerate(cam_array):
 
 
 
-def initialize_cam(cam):
+def initialize_cam(cam,camera_name):
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
-    cam.ExposureAuto = 'Off'
-    cam.PixelFormat = 'YCbCr422_8'
-    cam.ExposureTime = 1000
+    # cam.PixelFormat = 'YCbCr422_8'
+    # cam.ExposureTime = 200
+    cam.PixelFormat = 'BayerGB8'
+    cam.ExposureTime = 300
     cam.AcquisitionFrameRate = fps
+    # cam.BslBrightness = 0.4
+    # cam.BslContrast = 0.4
+    if (camera_name == 'Narrow'):
+        cam.ReverseX = True
+        cam.ReverseY = True
+        cam.ExposureAuto = 'Continuous'
+        cam.AutoExposureTimeUpperLimit = 400
+        cam.AutoGainUpperLimit = 5.0
+    if (camera_name == 'Wide'):
+        cam.ExposureAuto = 'Continuous'
+        cam.AutoExposureTimeUpperLimit = 500
+        cam.AutoGainUpperLimit = 5.0
 
 
 for idx, cam in enumerate(cam_array):
-    initialize_cam(cam)
+    camera_name = cam.DeviceInfo.GetUserDefinedName()
+    print(camera_name)
+    initialize_cam(cam, camera_name)
 
 
 class FFMPEG_VideoWriter:
@@ -249,11 +264,8 @@ class FFMPEG_VideoWriter:
         self.close()
 
 
-def draw_time_date(frame,cam_id):
+def draw_time_date(frame):
 
-    if (cam_id == narrow_cam_id):
-        M = cv2.getRotationMatrix2D((height/2,width/2), 180, 1.0)
-        frame = cv2.warpAffine(frame, M, (height,width))
     font = cv2.FONT_HERSHEY_SIMPLEX
     org = (1150, 50)
     fontScale = 1
@@ -281,7 +293,7 @@ def draw_time_date(frame,cam_id):
 def save_video(frame,cam_id):
     # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
     # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    frame = draw_time_date(frame,cam_id)
+    frame = draw_time_date(frame)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
     if (should_save_video):
@@ -351,9 +363,9 @@ def BackgroundLoop(cam_array):
     # video_name = dt_string+"_camera_"
 
     if (wide_cam_connected):
-        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter(dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast')
+        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast')
     if (narrow_cam_connected):
-        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter(dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast')
+        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast')
     # for i in range(cam_count):
     #     writer.append(FFMPEG_VideoWriter(video_name+str(i)+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast'))
     # writer_1 = FFMPEG_VideoWriter("output_1.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast')
