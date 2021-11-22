@@ -37,27 +37,22 @@ else:
     print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
     matchesMask = None
 
-############
-# draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-#                    singlePointColor = None,
-#                    matchesMask = matchesMask, # draw only inliers
-#                    flags = 2)
-# img3 = cv.drawMatches(narrow_img,kp1,wide_img,kp2,good,None,**draw_params)
-# plt.imshow(img3, 'gray'),plt.show()
-
-warped_narrow_img = cv.warpPerspective(narrow_img, M, ((narrow_img.shape[1]), wide_img.shape[0])) #wraped image
+narrow_img_color = cv.cvtColor(cv.imread('narrow_edited.png'),cv.COLOR_BGR2RGB)          # queryImage
+wide_img_color = cv.cvtColor(cv.imread('wide.png'),cv.COLOR_BGR2RGB) # trainImage
+# plt.imshow(narrow_img_color), plt.show()
+warped_narrow_img = cv.warpPerspective(narrow_img_color, M, ((narrow_img.shape[1]), wide_img.shape[0])) #wraped image
 
 # plt.imshow(dst, 'gray'),plt.show()
-dst_2 = np.int32(np.squeeze(dst))
+dst_2 = np.squeeze(dst)
 mask = np.zeros(wide_img.shape)
 cv.fillPoly(mask,np.int32([dst_2]),1)
-poly_copied = np.multiply(mask,warped_narrow_img)
-# plt.imshow(poly_copied, 'gray'),plt.show()
+poly_copied = cv.bitwise_and(warped_narrow_img,warped_narrow_img,mask = np.uint8(mask))
+# plt.imshow(poly_copied, ),plt.show()
 
-mask = np.ones(narrow_img.shape)
+mask_inverse = np.ones(narrow_img.shape)
 #assuming src1 and src2 are of same size
-cv.fillPoly(mask,np.int32([dst_2]),0)
-img1_middle_removed = np.multiply(mask,wide_img)
+cv.fillPoly(mask_inverse,np.int32([dst_2]),0)
+img1_middle_removed = cv.bitwise_and(wide_img_color,wide_img_color,mask = np.uint8(mask_inverse))
 
 concatted_img = np.add(poly_copied,img1_middle_removed)
-plt.imshow(concatted_img, 'gray'),plt.show()
+plt.imshow(concatted_img,),plt.show()
