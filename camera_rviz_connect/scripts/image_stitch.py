@@ -1,29 +1,63 @@
-# !/usr/bin/env python
-
-import cv2
 import numpy as np
+import cv2 as cv
+from matplotlib import pyplot as plt
 
-if __name__ == '__main__' :
+MIN_MATCH_COUNT = 10
+narrow_img = cv.imread('narrow_edited.png',0)          # queryImage
+wide_img = cv.imread('wide.png',0) # trainImage
+# Initiate SIFT detector
+sift = cv.SIFT_create()
+# find the keypoints and descriptors with SIFT
+kp1, des1 = sift.detectAndCompute(narrow_img,None)
+kp2, des2 = sift.detectAndCompute(wide_img,None)
+FLANN_INDEX_KDTREE = 1
+index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+search_params = dict(checks = 50)
+flann = cv.FlannBasedMatcher(index_params, search_params)
+matches = flann.knnMatch(des1,des2,k=2)
+# store all the good matches as per Lowe's ratio test.
+good = []
+for m,n in matches:
+    if m.distance < 0.7*n.distance:
+        good.append(m)
 
-    # Read source image.
-    im_src = cv2.imread('wide.png')
-    # Four corners of the book in source image
-    pts_src = np.array([[141, 131], [480, 159], [493, 630],[64, 601]])
 
-    # Read destination image.
-    im_dst = cv2.imread('narrow.jpg')
-    # Four corners of the book in destination image.
-    pts_dst = np.array([[318, 256],[534, 372],[316, 670],[73, 473]])
+#######################
+if len(good)>MIN_MATCH_COUNT:
+    src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+    dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+    M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC,5.0)
+    # print(M)
+    matchesMask = mask.ravel().tolist()
+    h,w = narrow_img.shape
+    pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+    dst = cv.perspectiveTransform(pts,M)
+    # wide_img = cv.polylines(wide_img,[np.int32(dst)],True,255,3, cv.LINE_AA)
+else:
+    print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
+    matchesMask = None
 
-    # Calculate Homography
-    h, status = cv2.findHomography(pts_src, pts_dst)
+############
+# draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+#                    singlePointColor = None,
+#                    matchesMask = matchesMask, # draw only inliers
+#                    flags = 2)
+# img3 = cv.drawMatches(narrow_img,kp1,wide_img,kp2,good,None,**draw_params)
+# plt.imshow(img3, 'gray'),plt.show()
 
-    # Warp source image to destination based on homography
-    im_out = cv2.warpPerspective(im_src, h, (im_dst.shape[1],im_dst.shape[0]))
+warped_narrow_img = cv.warpPerspective(narrow_img, M, ((narrow_img.shape[1]), wide_img.shape[0])) #wraped image
 
-    # Display images
-    cv2.imshow("Source Image", im_src)
-    cv2.imshow("Destination Image", im_dst)
-    cv2.imshow("Warped Source Image", im_out)
+# plt.imshow(dst, 'gray'),plt.show()
+dst_2 = np.int32(np.squeeze(dst))
+mask = np.zeros(wide_img.shape)
+cv.fillPoly(mask,np.int32([dst_2]),1)
+poly_copied = np.multiply(mask,warped_narrow_img)
+# plt.imshow(poly_copied, 'gray'),plt.show()
 
-    cv2.waitKey(0)
+mask = np.ones(narrow_img.shape)
+#assuming src1 and src2 are of same size
+cv.fillPoly(mask,np.int32([dst_2]),0)
+img1_middle_removed = np.multiply(mask,wide_img)
+
+concatted_img = np.add(poly_copied,img1_middle_removed)
+plt.imshow(concatted_img, 'gray'),plt.show()

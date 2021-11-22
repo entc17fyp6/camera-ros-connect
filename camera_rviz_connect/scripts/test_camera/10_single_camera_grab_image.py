@@ -283,8 +283,21 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 400
+        cam.AutoExposureTimeUpperLimit = 400000
         cam.AutoGainUpperLimit = 5.0
+
+        # cam.LightSourcePreset = 'Off'
+        # cam.BalanceWhiteAuto = 'Off'
+        # cam.Gain = 1
+        # cam.GainAuto = 'Off'
+        
+        # cam.BalanceRatioSelector = 'Red'
+        # cam.BalanceRatio = 2.1875
+        # cam.BalanceRatioSelector = 'Green'
+        # cam.BalanceRatio = 1.46875
+        # cam.BalanceRatioSelector = 'Blue'
+        # cam.BalanceRatio = 1.76
+
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
         cam.AutoExposureTimeUpperLimit = 500
