@@ -13,7 +13,7 @@ import os
 
 width = 1080
 height = 1920
-fps = 30
+fps = 5
 shold_save_video = True
 
 # camera_name = None
@@ -283,7 +283,7 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 300
+        cam.AutoExposureTimeUpperLimit = 300000
         cam.AutoGainUpperLimit = 5.0
 
         # cam.LightSourcePreset = 'Off'
@@ -345,6 +345,7 @@ def BackgroundLoop(cam):
     with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
+        # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
 
         try:
             while cam.IsGrabbing():
