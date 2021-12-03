@@ -13,7 +13,7 @@ import os
 
 width = 1080
 height = 1920
-fps = 5
+fps = 30
 shold_save_video = True
 
 # camera_name = None
@@ -283,7 +283,7 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 300000
+        cam.AutoExposureTimeUpperLimit = 1000
         cam.AutoGainUpperLimit = 5.0
 
         # cam.LightSourcePreset = 'Off'
@@ -300,7 +300,7 @@ def initialize_cam(cam,camera_name):
 
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 500
+        cam.AutoExposureTimeUpperLimit = 2000
         cam.AutoGainUpperLimit = 5.0
         
 

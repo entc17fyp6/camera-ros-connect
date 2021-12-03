@@ -55,7 +55,7 @@ def initialize_cam(cam,camera_name):
     # cam.PixelFormat = 'YCbCr422_8'
     # cam.ExposureTime = 200
     cam.PixelFormat = 'BayerGB8'
-    cam.ExposureTime = 300
+    cam.ExposureTime = 300  #300
     cam.AcquisitionFrameRate = fps
     # cam.BslBrightness = 0.4
     # cam.BslContrast = 0.4
@@ -63,11 +63,11 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 400
+        cam.AutoExposureTimeUpperLimit = 3500 #1000
         cam.AutoGainUpperLimit = 5.0
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 500
+        cam.AutoExposureTimeUpperLimit = 1800  #2000
         cam.AutoGainUpperLimit = 5.0
 
 
@@ -114,6 +114,7 @@ class FFMPEG_VideoWriter:
         libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
         mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
         mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
+        h264_qsv(q=10)  - quality - good          speed - >30fps achieved       size - 16GB/h (with 2 cameras *********)
  -
     audiofile
       Optional: The name of an audio file that will be incorporated
@@ -363,9 +364,13 @@ def BackgroundLoop(cam_array):
     # video_name = dt_string+"_camera_"
 
     if (wide_cam_connected):
-        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast')
+        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'fast')
+        # writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'ultrafast')
+        # writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='10', preset= 'medium')
     if (narrow_cam_connected):
-        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast')
+        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'fast')
+        # writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'ultrafast')
+        # writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='10', preset= 'medium')
     # for i in range(cam_count):
     #     writer.append(FFMPEG_VideoWriter(video_name+str(i)+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='1', preset= 'fast'))
     # writer_1 = FFMPEG_VideoWriter("output_1.mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="mpeg4", quality='11', preset= 'ultrafast')

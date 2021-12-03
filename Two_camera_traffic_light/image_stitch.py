@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
+from numpy.core.shape_base import vstack
 
 MIN_MATCH_COUNT = 10
 narrow_img = cv.imread('narrow.png',0)          # queryImage
@@ -30,26 +31,51 @@ if len(good)>MIN_MATCH_COUNT:
     # print(M)
     matchesMask = mask.ravel().tolist()
     h,w = narrow_img.shape
-    pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+    pts = np.float32([[0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
     dst = cv.perspectiveTransform(pts,M)
+
+    # pts_2 = np.squeeze(pts)
+    # raw = np.ones([4,1],dtype=float)
+    # pts_2 =np.append(pts_2,raw,axis=1).T
+    # # pts_2 = pts_2.transpose()
+    # pts_2 = np.matmul(M,pts_2)
+
+    # print("pts_2", pts_2.shape)
+    # dst_2 = np.matmul(M,pts_2)
+    # print("multi ",dst_2.shape)
+    # dst_3 = (np.true_divide(dst_2,dst_2[-1])).T
+    # # dst_2 = dst_2.transpose()
+    # print(dst_3.shape)
+    # dst_3 = dst_3[:,:2]
+    # print(dst_3)
+    # print(" ")
+    # print(dst)
+
+    # print(pts)
+    # print("dst")
+    # print(dst)
+    # a = np.array([0,0,1])
+    # b = np.matmul(a,M)
+    # # print(M)
+    # print(b)
     # wide_img = cv.polylines(wide_img,[np.int32(dst)],True,255,3, cv.LINE_AA)
 else:
     print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
     matchesMask = None
 
-f = open('homography_matrix.txt','w')
-for i in range(3):
-    for j in range(3):
-        f.write(str(M[i][j])+' ')
-    f.write('\n')
-# f.write(str(M))
-f.close()
-draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-                   singlePointColor = None,
-                   matchesMask = matchesMask, # draw only inliers
-                   flags = 2)
-img3 = cv.drawMatches(narrow_img,kp1,wide_img,kp2,good,None,**draw_params)
-plt.imshow(img3, 'gray'),plt.show()
+# f = open('homography_matrix.txt','w')
+# for i in range(3):
+#     for j in range(3):
+#         f.write(str(M[i][j])+' ')
+#     f.write('\n')
+# # f.write(str(M))
+# f.close()
+# # draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+# #                    singlePointColor = None,
+# #                    matchesMask = matchesMask, # draw only inliers
+# #                    flags = 2)
+# # img3 = cv.drawMatches(narrow_img,kp1,wide_img,kp2,good,None,**draw_params)
+# # plt.imshow(img3, 'gray'),plt.show()
 
 narrow_img_color = cv.cvtColor(cv.imread('narrow.png'),cv.COLOR_BGR2RGB)          # queryImage
 wide_img_color = cv.cvtColor(cv.imread('wide.png'),cv.COLOR_BGR2RGB) # trainImage
@@ -57,6 +83,8 @@ wide_img_color = cv.cvtColor(cv.imread('wide.png'),cv.COLOR_BGR2RGB) # trainImag
 warped_narrow_img = cv.warpPerspective(narrow_img_color, M, ((narrow_img.shape[1]), wide_img.shape[0])) #wraped image
 
 # plt.imshow(dst, 'gray'),plt.show()
+# dst_2= dst_3
+
 dst_2 = np.squeeze(dst)
 mask = np.zeros(wide_img.shape)
 print(mask.shape)
