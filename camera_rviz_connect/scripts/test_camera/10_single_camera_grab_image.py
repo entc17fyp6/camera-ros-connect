@@ -138,6 +138,7 @@ class FFMPEG_VideoWriter:
             '-pix_fmt', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
+            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
         ]
         cmd.extend([
             '-vcodec', codec,

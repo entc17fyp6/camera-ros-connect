@@ -95,7 +95,6 @@ int main()
             cv::waitKey();
             break;
         }
-
         samples[0] = frame;
         samples[1] = frame2;
 
