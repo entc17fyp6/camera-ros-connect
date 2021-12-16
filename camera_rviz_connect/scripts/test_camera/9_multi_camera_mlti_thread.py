@@ -161,7 +161,9 @@ class FFMPEG_VideoWriter:
             '-pix_fmt', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
-            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
+            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
+            # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
+            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
         ]
         cmd.extend([
             '-vcodec', codec,
@@ -295,7 +297,7 @@ def draw_time_date(frame):
 def save_video(frame,cam_id):
     # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
     # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    frame = draw_time_date(frame)
+    # frame = draw_time_date(frame)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
     if (should_save_video):

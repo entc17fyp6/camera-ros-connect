@@ -15,6 +15,7 @@ width = 1080
 height = 1920
 fps = 30
 shold_save_video = True
+visualize = True
 
 # camera_name = None
 
@@ -138,7 +139,9 @@ class FFMPEG_VideoWriter:
             '-pix_fmt', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
-            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
+            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
+            # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
+            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
         ]
         cmd.extend([
             '-vcodec', codec,
@@ -263,10 +266,14 @@ def draw_time_date(frame):
 def save_video(frame):
     # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
     # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    frame = draw_time_date(frame)
+    # frame = draw_time_date(frame)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
-
-    writer.write_frame(frame)
+    if (visualize):
+        cv2.namedWindow("Input")
+        cv2.imshow("Input", frame)
+        cv2.waitKey(1)
+    if (shold_save_video):
+        writer.write_frame(frame)
     return
 
 def initialize_cam(cam,camera_name):
@@ -301,7 +308,7 @@ def initialize_cam(cam,camera_name):
 
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 2000
+        cam.AutoExposureTimeUpperLimit = 1000
         cam.AutoGainUpperLimit = 5.0
         
 
@@ -343,7 +350,7 @@ def BackgroundLoop(cam):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M")
     global writer
-    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'medium') as writer:
+    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
         # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
