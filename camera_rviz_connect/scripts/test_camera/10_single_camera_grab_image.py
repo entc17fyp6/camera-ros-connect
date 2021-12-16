@@ -14,8 +14,11 @@ import os
 width = 1080
 height = 1920
 fps = 30
+narrow_AutoExposureTimeUpperLimit = 500
+wide_AutoExposureTimeUpperLimit = 1000
+quality_factor = 30
 shold_save_video = True
-visualize = True
+should_visualize = True
 
 # camera_name = None
 
@@ -128,7 +131,6 @@ class FFMPEG_VideoWriter:
 
         
         # order is important\
-        # drawtext = "drawtext=fontfile=DejaVuSans: text='Random Name': fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: boxborderw=5: x=20: y=20"
         cmd = [
             "ffmpeg",
             '-y',
@@ -141,7 +143,7 @@ class FFMPEG_VideoWriter:
             '-i', '-', '-an',
             # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
             # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
-            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
+            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
         ]
         cmd.extend([
             '-vcodec', codec,
@@ -246,34 +248,17 @@ class FFMPEG_VideoWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-def draw_time_date(frame):
-        
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    org = (1450, 50)
-    fontScale = 1
-    color = (255, 255, 0)
-    thickness = 2
+def save_video(frame):
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BayerBG2BGR)
+    writer.write_frame(frame)
+    return
 
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-
-    frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
+def visualize(frame):
+    # frame= cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     cv2.namedWindow("Input")
     cv2.imshow("Input", frame)
     cv2.waitKey(1)
-    return frame
-
-def save_video(frame):
-    # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
-    # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    # frame = draw_time_date(frame)
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
-    if (visualize):
-        cv2.namedWindow("Input")
-        cv2.imshow("Input", frame)
-        cv2.waitKey(1)
-    if (shold_save_video):
-        writer.write_frame(frame)
     return
 
 def initialize_cam(cam,camera_name):
@@ -291,7 +276,7 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 1000
+        cam.AutoExposureTimeUpperLimit = narrow_AutoExposureTimeUpperLimit
         cam.AutoGainUpperLimit = 5.0
 
         # cam.LightSourcePreset = 'Off'
@@ -308,7 +293,7 @@ def initialize_cam(cam,camera_name):
 
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 1000
+        cam.AutoExposureTimeUpperLimit = wide_AutoExposureTimeUpperLimit
         cam.AutoGainUpperLimit = 5.0
         
 
@@ -316,7 +301,6 @@ class ImageHandler (py.ImageEventHandler):
     def __init__(self, *args):
         super().__init__(*args)
         self.time_old = time.time()
-        self.frame_count = 0
 
         self.converter = py.ImageFormatConverter()
         self.converter.OutputPixelFormat = py.PixelType_RGB8packed
@@ -334,8 +318,10 @@ class ImageHandler (py.ImageEventHandler):
                 rate = 1/(time_new-self.time_old)
                 print(rate)
                 self.time_old = time_new
-                self.frame_count += 1
-                save_video(img)
+                if (shold_save_video):
+                    save_video(img)
+                if (should_visualize):
+                    visualize(img)
                 # writer.write_frame(img)
             else:
                 raise RuntimeError("Grab failed")
@@ -350,7 +336,7 @@ def BackgroundLoop(cam):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M")
     global writer
-    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='30', preset= 'fast') as writer:
+    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality= str(quality_factor), preset= 'fast') as writer:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
         # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)

@@ -267,37 +267,7 @@ class FFMPEG_VideoWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-
-def draw_time_date(frame):
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    org = (1150, 50)
-    fontScale = 1
-    color = (255, 255, 0)
-    thickness = 2
-
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-
-    frame = cv2.putText(frame, dt_string, org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-    # Attempt to display using cv2 (doesn't work)
-    # if (cam_id == 0):
-    #     cv2.namedWindow("1")
-    #     cv2.imshow("1", frame)
-    #     cv2.waitKey(1)
-    # else:
-    #     cv2.namedWindow("2")
-    #     cv2.imshow("2", frame)
-    #     cv2.waitKey(1)
-        
-    return frame
-
-
 def save_video(frame,cam_id):
-    # frame = np.frombuffer(frame, dtype=np.uint8).reshape(width, height, -1)
-    # frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-    # frame = draw_time_date(frame)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
     if (should_save_video):
