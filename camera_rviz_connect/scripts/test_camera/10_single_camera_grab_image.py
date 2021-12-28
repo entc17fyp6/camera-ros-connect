@@ -14,10 +14,10 @@ import os
 width = 1080
 height = 1920
 fps = 30
-narrow_AutoExposureTimeUpperLimit = 500
+narrow_AutoExposureTimeUpperLimit = 700
 wide_AutoExposureTimeUpperLimit = 1000
 quality_factor = 30
-shold_save_video = True
+shold_save_video = False
 should_visualize = True
 
 # camera_name = None
@@ -255,7 +255,7 @@ def save_video(frame):
     return
 
 def visualize(frame):
-    # frame= cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    frame= cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     cv2.namedWindow("Input")
     cv2.imshow("Input", frame)
     cv2.waitKey(1)

@@ -27,66 +27,6 @@ should_visualize = True
 ###
 
 class FFMPEG_Image_Feeder:
-    """ A class for FFMPEG-based video writing.
-
-    A class to write videos using ffmpeg. ffmpeg will write in a large
-    choice of formats.
-
-    Parameters
-    -----------
-
-    filename
-      Any filename like 'video.mp4' etc. but if you want to avoid
-      complications it is recommended to use the generic extension
-      '.avi' for all your videos.
-
-    size
-      Size (width,height) of the output video in pixels.
-
-    fps
-      Frames per second in the output video file.
-
-    codec
-      FFMPEG codec. It seems that in terms of quality the hierarchy is
-      'rawvideo' = 'png' > 'mpeg4' > 'libx264'
-      'png' manages the same lossless quality as 'rawvideo' but yields
-      smaller files. Type ``ffmpeg -codecs`` in a terminal to get a list
-      of accepted codecs.
-
-      Note for default 'libx264': by default the pixel format yuv420p
-      is used. If the video dimensions are not both even (e.g. 720x405)
-      another pixel format is used, and this can cause problem in some
-      video readers.
-
-      Experimentally found best options 
-        libx264         - quality - very good     speed - ~30fps achieved       size - 16.74 GB/h
-        libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
-        mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
-        mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
-        h264_qsv(-q:v=30) - quality - good        speed - ~30fps achieved       size - 1.6GB/h      -hardware acceleration
- -
-    audiofile
-      Optional: The name of an audio file that will be incorporated
-      to the video.
-
-    preset
-      Sets the time that FFMPEG will take to compress the video. The slower,
-      the better the compression rate. Possibilities are: ultrafast,superfast,
-      veryfast, faster, fast, medium (default), slow, slower, veryslow,
-      placebo. 
-
-      This and affects only for the libx264, libx265 libxvid etc. ('-crf' also affect these types)
-      for mjpeg, mpeg4 etc. use -q:v factor
-
-    bitrate
-      Only relevant for codecs which accept a bitrate. "5000k" offers
-      nice results in general.
-
-    withmask
-      Boolean. Set to ``True`` if there is a mask in the video to be
-      encoded.
-
-    """
 
     def __init__(self, size, fps, codec="libx264", audiofile=None,
                  preset="medium", bitrate=None, pixfmt="rgba", quality = '11',crf = '20',
