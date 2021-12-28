@@ -13,42 +13,12 @@ import os
 
 width = 1080
 height = 1920
-fps = 30
-narrow_AutoExposureTimeUpperLimit = 700
+fps = 10
+narrow_AutoExposureTimeUpperLimit = 50000
 wide_AutoExposureTimeUpperLimit = 1000
 quality_factor = 30
-shold_save_video = False
+should_feed_video = True
 should_visualize = True
-
-# camera_name = None
-
-# input_frame_publisher = rospy.Publisher('/input_frame',CameraImage,queue_size=1)
-# rospy.init_node('image_feeder_node', anonymous=True)
-
-# def publish_image(frame):
-
-#     frame = draw_time_date(frame)
-
-#     input_frame = CameraImage()
-#     input_frame.header.stamp = rospy.Time.now()
-#     input_frame.height = frame.shape[0]
-#     input_frame.width = frame.shape[1]
-#     input_frame.encoding = "rgb8"
-#     input_frame.is_bigendian = False
-#     input_frame.step = 3* frame.shape[1]
-#     input_frame.data = frame.tobytes()
-
-#     input_frame_publisher.publish(input_frame)
-    
-
-        
-#     frame = cv2.cvtColor(cv2.resize(frame, (height,width)), cv2.COLOR_RGB2BGR)
-#     cv2.namedWindow("Input")
-#     cv2.imshow("Input", frame)
-#     cv2.waitKey(1)
-
-#     return
-
 
 ### this FFMPEG_VideoWriter class is copied and modified from https://github.com/basler/pypylon/issues/113 
 
@@ -56,79 +26,16 @@ should_visualize = True
 ### this class is an excerpt from the project moviepy https://github.com/Zulko/moviepy.git moviepy/video/io/ffmpeg_writer.py
 ###
 
-class FFMPEG_VideoWriter:
-    """ A class for FFMPEG-based video writing.
+class FFMPEG_Image_Feeder:
 
-    A class to write videos using ffmpeg. ffmpeg will write in a large
-    choice of formats.
-
-    Parameters
-    -----------
-
-    filename
-      Any filename like 'video.mp4' etc. but if you want to avoid
-      complications it is recommended to use the generic extension
-      '.avi' for all your videos.
-
-    size
-      Size (width,height) of the output video in pixels.
-
-    fps
-      Frames per second in the output video file.
-
-    codec
-      FFMPEG codec. It seems that in terms of quality the hierarchy is
-      'rawvideo' = 'png' > 'mpeg4' > 'libx264'
-      'png' manages the same lossless quality as 'rawvideo' but yields
-      smaller files. Type ``ffmpeg -codecs`` in a terminal to get a list
-      of accepted codecs.
-
-      Note for default 'libx264': by default the pixel format yuv420p
-      is used. If the video dimensions are not both even (e.g. 720x405)
-      another pixel format is used, and this can cause problem in some
-      video readers.
-
-      Experimentally found best options 
-        libx264         - quality - very good     speed - ~30fps achieved       size - 16.74 GB/h
-        libx265         - quality - very good     speed - ~15fps achieved       size - 1.396 GB/h
-        mjpeg(-q:v=25)  - quality - good          speed - ~30fps achieved       size - 3.66 GB/h
-        mpeg(-q:v=11)   - quality - very good     speed - ~30fps achieved       size - 1.624 GB/h
-        h264_qsv(-q:v=30) - quality - good        speed - ~30fps achieved       size - 1.6GB/h      -hardware acceleration
- -
-    audiofile
-      Optional: The name of an audio file that will be incorporated
-      to the video.
-
-    preset
-      Sets the time that FFMPEG will take to compress the video. The slower,
-      the better the compression rate. Possibilities are: ultrafast,superfast,
-      veryfast, faster, fast, medium (default), slow, slower, veryslow,
-      placebo. 
-
-      This and affects only for the libx264, libx265 libxvid etc. ('-crf' also affect these types)
-      for mjpeg, mpeg4 etc. use -q:v factor
-
-    bitrate
-      Only relevant for codecs which accept a bitrate. "5000k" offers
-      nice results in general.
-
-    withmask
-      Boolean. Set to ``True`` if there is a mask in the video to be
-      encoded.
-
-    """
-
-    def __init__(self, filename, size, fps, codec="libx264", audiofile=None,
+    def __init__(self, size, fps, codec="libx264", audiofile=None,
                  preset="medium", bitrate=None, pixfmt="rgba", quality = '11',crf = '20',
                  logfile=None, threads=None, ffmpeg_params=None):
 
         if logfile is None:
             logfile = sp.PIPE
 
-        self.filename = filename
         self.codec = codec
-        self.ext = self.filename.split(".")[-1]
-
         
         # order is important\
         cmd = [
@@ -138,40 +45,22 @@ class FFMPEG_VideoWriter:
             '-f', 'rawvideo',
             '-vcodec', 'rawvideo',
             '-s', '%dx%d' % (size[1], size[0]),
-            '-pix_fmt', pixfmt,
+            # '-pix_fmt', pixfmt,
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
-            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
-            # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
-            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
-        ]
-        cmd.extend([
+            '-f', 'image2pipe',
+            '-pix_fmt', 'bgr24',
             '-vcodec', codec,
             '-q:v', quality,
-            # '-crf', crf,
             '-preset', preset,
-        ])
-        if ffmpeg_params is not None:
-            cmd.extend(ffmpeg_params)
-        if bitrate is not None:
-            cmd.extend([
-                '-b', bitrate
-            ])
-        if threads is not None:
-            cmd.extend(["-threads", str(threads)])
+            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
+            # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'",
+            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'",
+            '-vcodec', 'rawvideo', '-an', '-',
+        ]
 
-        if ((codec == 'libx264') and
-                (size[0] % 2 == 0) and
-                (size[1] % 2 == 0)):
-            cmd.extend([
-                '-pix_fmt', 'yuv420p'
-            ])
-        cmd.extend([
-            filename
-        ])
-
-        popen_params = {"stdout": sp.DEVNULL,
-                        "stderr": logfile,
+        popen_params = {"stdout": sp.PIPE,
+                        "stderr": sp.PIPE,
                         "stdin": sp.PIPE,
                         # "shell":True   ## keep this line in windows 10, commentout in ubuntu 20.04
                         }
@@ -184,10 +73,16 @@ class FFMPEG_VideoWriter:
         self.proc = sp.Popen(cmd, **popen_params)
 
 
-    def write_frame(self, img_array):
+    def view_frame(self, img_array):
         """ Writes one frame in the file."""
         try:
-               self.proc.stdin.write(img_array.tobytes())
+            self.proc.stdin.write(img_array.tobytes())
+            raw_frame = self.proc.stdout.read(1920*1080*3)
+            frame = np.frombuffer(raw_frame, np.uint8)
+            frame = frame.reshape((1080, 1920, 3))
+            cv2.namedWindow("image", cv2.WINDOW_NORMAL)  
+            cv2.imshow('image', frame)
+            cv2.waitKey(1)
         except IOError as err:
             _, ffmpeg_error = self.proc.communicate()
             error = (str(err) + ("\n\nMoviePy error: FFMPEG encountered "
@@ -248,14 +143,14 @@ class FFMPEG_VideoWriter:
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
-def save_video(frame):
+def image_feed(frame):
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
     # frame = cv2.cvtColor(frame, cv2.COLOR_BayerBG2BGR)
-    writer.write_frame(frame)
+    feeder.view_frame(frame)
     return
 
 def visualize(frame):
-    frame= cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    # frame= cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     cv2.namedWindow("Input")
     cv2.imshow("Input", frame)
     cv2.waitKey(1)
@@ -318,11 +213,10 @@ class ImageHandler (py.ImageEventHandler):
                 rate = 1/(time_new-self.time_old)
                 print(rate)
                 self.time_old = time_new
-                if (shold_save_video):
-                    save_video(img)
+                if (should_feed_video):
+                    image_feed(img)
                 if (should_visualize):
                     visualize(img)
-                # writer.write_frame(img)
             else:
                 raise RuntimeError("Grab failed")
         except Exception as e:
@@ -333,10 +227,8 @@ def BackgroundLoop(cam):
 
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
-    now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y_%H-%M")
-    global writer
-    with FFMPEG_VideoWriter("videos/"+dt_string+"_"+camera_name+"_camera_"+".mp4",(cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality= str(quality_factor), preset= 'fast') as writer:
+    global feeder
+    with FFMPEG_Image_Feeder((cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality= str(quality_factor), preset= 'fast') as feeder:
         # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
         cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
         # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)

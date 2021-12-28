@@ -12,7 +12,11 @@ should_save_video = True
 
 width = 1080
 height = 1920
-fps = 30
+fps = 25
+quality = '25'
+PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
+wide_AutoExposureTimeUpperLimit = 2000
+narrow_AutoExposureTimeUpperLimit = 2000
 
 
 tlf = py.TlFactory.GetInstance()
@@ -52,9 +56,9 @@ def initialize_cam(cam,camera_name):
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
-    # cam.PixelFormat = 'YCbCr422_8'
+    cam.PixelFormat = PixelFormat
     # cam.ExposureTime = 200
-    cam.PixelFormat = 'BayerGB8'
+    # cam.PixelFormat = 'BayerGB8'
     cam.ExposureTime = 300  #300
     cam.AcquisitionFrameRate = fps
     # cam.BslBrightness = 0.4
@@ -63,11 +67,11 @@ def initialize_cam(cam,camera_name):
         cam.ReverseX = True
         cam.ReverseY = True
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 3500 #1000
+        cam.AutoExposureTimeUpperLimit = narrow_AutoExposureTimeUpperLimit #1000
         cam.AutoGainUpperLimit = 5.0
     if (camera_name == 'Wide'):
         cam.ExposureAuto = 'Continuous'
-        cam.AutoExposureTimeUpperLimit = 1800  #2000
+        cam.AutoExposureTimeUpperLimit = wide_AutoExposureTimeUpperLimit  #2000
         cam.AutoGainUpperLimit = 5.0
 
 
@@ -162,8 +166,8 @@ class FFMPEG_VideoWriter:
             '-r', '%.02f' % fps,
             '-i', '-', '-an',
             # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1'",
-            # '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
-            '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
+            '-vf', "drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
+            # '-vf', "curves=r='0/0 0.25/0.4 0.5/0.5 1/1':g='0/0 0.25/0.4 0.5/0.5 1/1':b='0/0 0.25/0.4 0.5/0.5 1/1', drawtext='fontfile=c\:/Windows/Fonts/Calibri.ttf:text=%{localtime}:fontcolor=yellow:fontsize=35:x=1600:y=20:'"
         ]
         cmd.extend([
             '-vcodec', codec,
@@ -337,11 +341,11 @@ def BackgroundLoop(cam_array):
     # video_name = dt_string+"_camera_"
 
     if (wide_cam_connected):
-        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'fast')
+        writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality=quality, preset= 'fast')
         # writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'ultrafast')
         # writer_dict[str(wide_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_wide_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='10', preset= 'medium')
     if (narrow_cam_connected):
-        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'fast')
+        writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality=quality, preset= 'fast')
         # writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='20', preset= 'ultrafast')
         # writer_dict[str(narrow_cam_id)] = FFMPEG_VideoWriter("videos/"+dt_string+"_narrow_cam"+".mp4",(width, height), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality='10', preset= 'medium')
     # for i in range(cam_count):

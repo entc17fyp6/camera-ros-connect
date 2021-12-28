@@ -3,8 +3,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 ## read to videos
-wide_cap = cv2.VideoCapture('../videos/wide_cam/12-11-2021 11-38_camera_0.mp4')
-narrow_cap = cv2.VideoCapture('../videos/narrow_cam/12-11-2021_11-38_camera_1.mp4')
+# wide_cap = cv2.VideoCapture('../videos/wide_cam/12-11-2021 11-38_camera_0.mp4')
+# narrow_cap = cv2.VideoCapture('../videos/narrow_cam/12-11-2021_11-38_camera_1.mp4')
+wide_cap = cv2.VideoCapture('C:/Users/Samare/Desktop/02-12-2021_16-11_wide_cam.mp4')
+narrow_cap = cv2.VideoCapture('C:/Users/Samare/Desktop/02-12-2021_16-11_narrow_cam.mp4')
 # wide_cap = cv2.VideoCapture('test_camera/videos/18-11-2021_09-40_wide_cam.mp4')
 # narrow_cap = cv2.VideoCapture('test_camera/videos/18-11-2021_09-40_narrow_cam.mp4')
 
@@ -59,6 +61,13 @@ else:
     print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
     matchesMask = None
 
+f = open('homography_matrix_2.txt','w')
+for i in range(3):
+    for j in range(3):
+        f.write(str(M[i][j])+' ')
+    f.write('\n')
+# f.write(str(M))
+f.close()
 
 h,w,_ = narrow_frame.shape
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
