@@ -16,7 +16,6 @@
 
 // using namespace std
 
-
 constexpr float CONFIDENCE_THRESHOLD = 0;
 constexpr float NMS_THRESHOLD = 0.4;
 constexpr int NUM_CLASSES = 5;
@@ -68,10 +67,10 @@ int main()
             class_names.push_back(line);
     }
 
-    cv::VideoCapture source("/home/fyp/Desktop/02-12-2021_16-11_narrow_cam.mp4");
-    cv::VideoCapture source2("/home/fyp/Desktop/02-12-2021_16-11_wide_cam.mp4");
+    cv::VideoCapture source("/home/fyp2selfdriving/Documents/traffic_light/yolov4/darknet/video/traffic_light_compressed.mp4");
+    cv::VideoCapture source2("/home/fyp2selfdriving/Documents/traffic_light/yolov4/darknet/video/traffic_lights.mp4");
 
-    auto net = cv::dnn::readNetFromDarknet("/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/yolov4-custom.cfg", "/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/weights/yolov4-custom_last.weights");
+    auto net = cv::dnn::readNetFromDarknet("/home/fyp2selfdriving/Documents/traffic_light/yolov4/darknet/cfg/yolov4-custom.cfg", "/home/fyp2selfdriving/Documents/traffic_light/yolov4/training/yolov4-custom_best.weights");
     net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
     // net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
@@ -95,6 +94,7 @@ int main()
             cv::waitKey();
             break;
         }
+
         samples[0] = frame;
         samples[1] = frame2;
 
@@ -121,55 +121,37 @@ int main()
         
             const auto num_boxes = output.size[1];
             for (int i = 0; i < num_boxes; i++)
-            {
-                auto x = output.at<float>(0,i, 0) * samples[0].cols;
-                auto y = output.at<float>(0,i, 1) * samples[0].rows;
-                auto width = output.at<float>(0,i, 2) * samples[0].cols;
-                auto height = output.at<float>(0,i, 3) * samples[0].rows;
-                auto x_ = output.at<float>(1,i, 0) * samples[1].cols;
-                auto y_ = output.at<float>(1,i, 1) * samples[1].rows;
-                auto width_ = output.at<float>(1,i, 2) * samples[1].cols;
-                auto height_ = output.at<float>(1,i, 3) * samples[1].rows;
+            {   
+                for (uint8_t frame_num = 0;frame_num<2;frame_num++){
+                    auto x = output.at<float>(frame_num,i, 0) * samples[frame_num].cols;
+                    auto y = output.at<float>(frame_num,i, 1) * samples[frame_num].rows;
+                    auto width = output.at<float>(frame_num,i, 2) * samples[frame_num].cols;
+                    auto height = output.at<float>(frame_num,i, 3) * samples[frame_num].rows;
+                    
+                    if (frame_num == 1){
+                        obj_corners[0] = cv::Point2f(x - width/2, y - height/2);
+                        obj_corners[1] = cv::Point2f(x + width/2, y + height/2);
 
+                        cv::perspectiveTransform( obj_corners, scene_corners, M_mat);
+                        width = scene_corners[1].x - scene_corners[0].x;
+                        height = scene_corners[1].y - scene_corners[0].y;
+                        x = scene_corners[0].x;
+                        y = scene_corners[0].y;
 
-                    //-- Get the corners from the image_1 ( the object to be "detected" )
-
-                obj_corners[0] = cv::Point2f(x_ - width_/2, y_ - height_/2);
-                obj_corners[1] = cv::Point2f(x_ + width_/2, y_ + height_/2);
-
-
-                cv::perspectiveTransform( obj_corners, scene_corners, M_mat);
-                width_ = scene_corners[1].x - scene_corners[0].x;
-                height_ = scene_corners[1].y - scene_corners[0].y;
-                x_ = scene_corners[0].x;
-                y_ = scene_corners[0].y;
-
-
-                // std::cout << "Perspective trans done" << std::endl;
-                // std::cout << sizeof(scene_corners) << std::endl;
-
-
-                cv::Rect rect(x - width/2, y - height/2, width, height);
-                cv::Rect rect2(x_ - width_/2, y_ - height_/2, width_, height_);
-
-
-                for (int c = 0; c < NUM_CLASSES; c++)
-                {
-                    auto confidence = *output.ptr<float>(0,i, 5 + c);
-                    auto confidence2 = *output.ptr<float>(1,i, 5 + c);
-                    if (confidence >= CONFIDENCE_THRESHOLD)
-                    {
-                        boxes[c].push_back(rect);
-                        scores[c].push_back(confidence);
                     }
-                    if (confidence2 >= CONFIDENCE_THRESHOLD)
-                    {
-                        boxes[c+NUM_CLASSES].push_back(rect2);
-                        scores[c+NUM_CLASSES].push_back(confidence2);
+                    cv::Rect rect(x - width/2, y - height/2, width, height);
+
+                    for (int c = 0; c < NUM_CLASSES; c++){
+                        auto confidence = *output.ptr<float>(frame_num,i, 5 + c);
+                        if (confidence >= CONFIDENCE_THRESHOLD)
+                        {
+                            boxes[c+NUM_CLASSES*frame_num].push_back(rect);
+                            scores[c+NUM_CLASSES*frame_num].push_back(confidence);
+                        }
                     }
                 }
+
             }
-            // }
         }
         // std::cout << "before nms" << std::endl;
 
