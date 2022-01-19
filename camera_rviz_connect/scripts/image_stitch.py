@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
 
-find_homograpy = False
+find_homograpy = True
 
 MIN_MATCH_COUNT = 10
 narrow_calibration_img = cv.imread('narrow.jpg',0)          # queryImage

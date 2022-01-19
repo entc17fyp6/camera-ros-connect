@@ -2,73 +2,90 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
+calibrate_from_vid = False
+narrow_cam_calibration_time = 5000 ## ms
+wide_cam_calibration_time = 5000  ## ms
+
+narrow_cam_vid_start_time = 1000 ## ms
+wide_cam_vid_start_time = 1000  ## ms
+
 ## read to videos
-# wide_cap = cv2.VideoCapture('../videos/wide_cam/12-11-2021 11-38_camera_0.mp4')
-# narrow_cap = cv2.VideoCapture('../videos/narrow_cam/12-11-2021_11-38_camera_1.mp4')
-wide_cap = cv2.VideoCapture('C:/Users/Samare/Desktop/02-12-2021_16-11_wide_cam.mp4')
-narrow_cap = cv2.VideoCapture('C:/Users/Samare/Desktop/02-12-2021_16-11_narrow_cam.mp4')
-# wide_cap = cv2.VideoCapture('test_camera/videos/18-11-2021_09-40_wide_cam.mp4')
-# narrow_cap = cv2.VideoCapture('test_camera/videos/18-11-2021_09-40_narrow_cam.mp4')
 
-# wide_frame_count = int(wide_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-# narrow_frame_count = int(narrow_cap.get(cv2.CAP_PROP_FRAME_COUNT))
-# frame_count_difference = wide_frame_count - narrow_frame_count
-# frame_skip_no = int(wide_frame_count/frame_count_difference)
+wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_wide_cam.mp4')
+narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_narrow_cam.mp4')
+# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_wide_cam.mp4')
+# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_narrow_cam.mp4')
+# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_wide_cam.mp4')
+# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_narrow_cam.mp4')
+# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\29-12-2021_12-41_wide_cam.mp4')
+# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\29-12-2021_12-41_narrow_cam.mp4')
 
-# print(wide_frame_count, narrow_frame_count, frame_skip_no)
+narrow_ret, narrow_frame = narrow_cap.read()
+h,w,_ = narrow_frame.shape
+
 # Check if camera opened successfully
 if ((wide_cap.isOpened()== False) or (narrow_cap.isOpened() == False)): 
   print("Error opening video stream or file")
 
-## read a single frame to calculate homography between cameras
-wide_cap.set(0,1000) #read the 1000mS frame
-narrow_cap.set(0,1000)
 
-wide_ret, wide_frame = wide_cap.read()
+if (calibrate_from_vid == True):
+  
+  wide_ret, wide_frame = wide_cap.read()
+  narrow_ret, narrow_frame = narrow_cap.read()
+
+  ## read a single frame to calculate homography between cameras
+  wide_cap.set(0,wide_cam_calibration_time) #Current position of the video file in milliseconds.
+  narrow_cap.set(0,narrow_cam_calibration_time)
+
+  wide_ret, wide_frame = wide_cap.read()
+  narrow_ret, narrow_frame = narrow_cap.read()
+
+  ### calculate homography
+  MIN_MATCH_COUNT = 10
+  # Initiate SIFT detector
+  sift = cv2.SIFT_create()
+  # find the keypoints and descriptors with SIFT
+  kp1, des1 = sift.detectAndCompute(narrow_frame,None)
+  kp2, des2 = sift.detectAndCompute(wide_frame,None)
+  FLANN_INDEX_KDTREE = 1
+  index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+  search_params = dict(checks = 50)
+  flann = cv2.FlannBasedMatcher(index_params, search_params)
+  matches = flann.knnMatch(des1,des2,k=2)
+  # store all the good matches as per Lowe's ratio test.
+  good = []
+  for m,n in matches:
+      if m.distance < 0.7*n.distance:
+          good.append(m)
+
+
+  #######################
+  if len(good)>MIN_MATCH_COUNT:
+      src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+      dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+      M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+      # print(M)
+      matchesMask = mask.ravel().tolist()
+      pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+      dst = cv2.perspectiveTransform(pts,M)
+      # wide_frame = cv2.polylines(wide_frame,[np.int32(dst)],True,255,3, cv2.LINE_AA)
+  else:
+      print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
+      matchesMask = None
+
+  f = open('homography_matrix_from_vid.txt','w')
+  for i in range(3):
+      for j in range(3):
+          f.write(str(M[i][j])+' ')
+      f.write('\n')
+  # f.write(str(M))
+  f.close()
+
+
+else: ## use original homograpy matrix
+  M = np.loadtxt('homography_matrix.txt', usecols=range(3))
+
 narrow_ret, narrow_frame = narrow_cap.read()
-
-### calculate homography
-MIN_MATCH_COUNT = 10
-# Initiate SIFT detector
-sift = cv2.SIFT_create()
-# find the keypoints and descriptors with SIFT
-kp1, des1 = sift.detectAndCompute(narrow_frame,None)
-kp2, des2 = sift.detectAndCompute(wide_frame,None)
-FLANN_INDEX_KDTREE = 1
-index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-search_params = dict(checks = 50)
-flann = cv2.FlannBasedMatcher(index_params, search_params)
-matches = flann.knnMatch(des1,des2,k=2)
-# store all the good matches as per Lowe's ratio test.
-good = []
-for m,n in matches:
-    if m.distance < 0.7*n.distance:
-        good.append(m)
-
-
-#######################
-if len(good)>MIN_MATCH_COUNT:
-    src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
-    dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
-    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
-    # print(M)
-    matchesMask = mask.ravel().tolist()
-    h,w,_ = narrow_frame.shape
-    pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-    dst = cv2.perspectiveTransform(pts,M)
-    # wide_frame = cv2.polylines(wide_frame,[np.int32(dst)],True,255,3, cv2.LINE_AA)
-else:
-    print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
-    matchesMask = None
-
-f = open('homography_matrix_2.txt','w')
-for i in range(3):
-    for j in range(3):
-        f.write(str(M[i][j])+' ')
-    f.write('\n')
-# f.write(str(M))
-f.close()
-
 h,w,_ = narrow_frame.shape
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 dst = cv2.perspectiveTransform(pts,M)
@@ -84,8 +101,8 @@ cv2.fillPoly(mask_inverse,np.int32([dst]),0)
 
 ## start video from beginning
 
-wide_cap.set(0,0)
-narrow_cap.set(0,0)
+wide_cap.set(0,wide_cam_vid_start_time) #Current position of the video file in milliseconds.
+narrow_cap.set(0,narrow_cam_vid_start_time)
 
 # frame_count = 0
 while((wide_cap.isOpened()) and (narrow_cap.isOpened()) ):

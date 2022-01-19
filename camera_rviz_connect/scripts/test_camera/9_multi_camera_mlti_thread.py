@@ -12,11 +12,11 @@ should_save_video = True
 
 width = 1080
 height = 1920
-fps = 30
+fps = 5
 quality = '25'
 PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
-wide_AutoExposureTimeUpperLimit = 140
-narrow_AutoExposureTimeUpperLimit = 200
+wide_AutoExposureTimeUpperLimit = 200000
+narrow_AutoExposureTimeUpperLimit = 200000
 
 
 tlf = py.TlFactory.GetInstance()
