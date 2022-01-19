@@ -1,8 +1,15 @@
+## Traffic light detection using Two Camera input
 
-From the Markdown Cheatsheet:
+Object detection model: Yolov4
 
-You can add it to your repo and reference it with an image tag:
+### Real time traffic light detection
 
-Inline-style: 
-![alt text](/images/traffic_light_detection.gif "Logo Title Text 1" )
+<img src="/images/traffic_light_detection.gif" width="700" />
 
+### Combining two camera inputs
+
+<img src="/images/image_stitching.png" width="700" />
+
+### System architecture
+
+<img src="/images/traffic_light_detection.png" width="700" />
