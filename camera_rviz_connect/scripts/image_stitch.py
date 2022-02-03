@@ -5,10 +5,10 @@ from matplotlib import pyplot as plt
 find_homograpy = True
 
 MIN_MATCH_COUNT = 10
-narrow_calibration_img = cv.imread('narrow.jpg',0)          # queryImage
+narrow_calibration_img = cv.imread('narrow_rectified.jpg',0)          # queryImage
 wide_calibration_img = cv.imread('wide.jpg',0) # trainImage
 
-narrow_img_color = cv.cvtColor(cv.imread('narrow.jpg'),cv.COLOR_BGR2RGB)          # queryImage
+narrow_img_color = cv.cvtColor(cv.imread('narrow_rectified.jpg'),cv.COLOR_BGR2RGB)          # queryImage
 wide_img_color = cv.cvtColor(cv.imread('wide.jpg'),cv.COLOR_BGR2RGB) # trainImage
 
 def calc_homograpy(narrow_img, wide_img, MIN_MATCH_COUNT):

@@ -2,19 +2,19 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-calibrate_from_vid = False
-narrow_cam_calibration_time = 5000 ## ms
-wide_cam_calibration_time = 5000  ## ms
+calibrate_from_vid = True
+narrow_cam_calibration_time = 1000 ## ms
+wide_cam_calibration_time = 1000  ## ms
 
 narrow_cam_vid_start_time = 1000 ## ms
 wide_cam_vid_start_time = 1000  ## ms
 
 ## read to videos
 
-wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_wide_cam.mp4')
-narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_narrow_cam.mp4')
-# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_wide_cam.mp4')
-# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_narrow_cam.mp4')
+# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_wide_cam.mp4')
+# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_narrow_cam.mp4')
+wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_wide_cam.mp4')
+narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_narrow_cam.mp4')
 # wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_wide_cam.mp4')
 # narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_narrow_cam.mp4')
 # wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\29-12-2021_12-41_wide_cam.mp4')

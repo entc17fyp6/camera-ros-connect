@@ -23,6 +23,7 @@ CATKIN_IGNORE
 *.jpg
 *.png
 *.pdf
+*.log
 
 ## do not ignore
 !/images/*
