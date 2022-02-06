@@ -21,8 +21,12 @@ should_feed_video = False
 should_visualize = True
 should_filter = True
 
-def ffmpeg_filter(frame, w,h):
-    command = ['ffmpeg', '-y',
+
+class ffmpeg_filter_class:
+    def __init__(self, h=1080,w=1920,fps=30):
+        self.w = w
+        self.h = h
+        self.command = ['ffmpeg', '-y',
                 '-s', '{}x{}'.format(h, w),
                 '-f', 'rawvideo',
                 '-r', '%.02f' % fps,
@@ -34,14 +38,32 @@ def ffmpeg_filter(frame, w,h):
                 '-pix_fmt', 'bgr24',
                 '-vcodec', 'rawvideo', '-']
 
-    ffmpeg = sp.Popen(command, stderr=sp.DEVNULL ,stdout = sp.PIPE, stdin=sp.PIPE )
-    out, err = ffmpeg.communicate(input=frame.tobytes())
-    img = np.frombuffer(out, np.uint8).reshape((w, h, 3))
-    return img
+        self.proc = sp.Popen(self.command, stderr=sp.DEVNULL ,stdout = sp.PIPE, stdin=sp.PIPE )
+        
 
+    def filter(self,frame):
+        self.proc.stdin.write(frame.tobytes())
+        frame = self.proc.stdout.read(self.w*self.h*3)
+        frame = np.frombuffer(frame, np.uint8).reshape((self.h, self.w, 3))
+        return frame
+
+    def close(self):
+        if self.proc:
+            self.proc.stdin.close()
+            if self.proc.stderr is not None:
+                self.proc.stderr.close()
+            self.proc.wait()
+
+        self.proc = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 def image_feed(frame):
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+    # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
     # frame = cv2.cvtColor(frame, cv2.COLOR_BayerBG2BGR)
     return
 
@@ -109,9 +131,8 @@ class ImageHandler (py.ImageEventHandler):
                 rate = 1/(time_new-self.time_old)
                 print(rate)
                 self.time_old = time_new
-                # ret, img = cap.read()
                 if (should_filter):
-                    img = ffmpeg_filter(frame=img,w=width,h=height)
+                    img = ffmpeg_filter.filter(img)
                 if (should_feed_video):
                     image_feed(img)
                 if (should_visualize):
@@ -126,22 +147,21 @@ def BackgroundLoop(cam):
 
     cam.RegisterImageEventHandler(handler, py.RegistrationMode_ReplaceAll, py.Cleanup_None)
 
-    global feeder
-    # with FFMPEG_Image_Feeder((cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality= str(quality_factor), preset= 'fast') as feeder:
-        # cam.StartGrabbingMax(100, py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
-    cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
-    # cam.StartGrabbing(py.GrabStrategy_LatestImages, py.GrabLoop_ProvidedByInstantCamera)
+    global ffmpeg_filter
+    # with ffmpeg_filter_class((cam.Height.Value, cam.Width.Value), fps=fps, pixfmt="yuv420p", codec="h264_qsv", quality= str(quality_factor), preset= 'fast') as feeder:
+    with ffmpeg_filter_class(h=cam.Height.Value,w=cam.Width.Value,fps=fps) as ffmpeg_filter:
+        cam.StartGrabbing(py.GrabStrategy_LatestImageOnly, py.GrabLoop_ProvidedByInstantCamera)
 
-    try:
-        while cam.IsGrabbing():
+        try:
+            while cam.IsGrabbing():
+                pass
+        except KeyboardInterrupt:
             pass
-    except KeyboardInterrupt:
-        pass
 
-    cam.StopGrabbing()
-    cam.DeregisterImageEventHandler(handler)
-    cam.Close()
-    cv2.destroyAllWindows()
+        cam.StopGrabbing()
+        cam.DeregisterImageEventHandler(handler)
+        cam.Close()
+        cv2.destroyAllWindows()
 
 # return handler.img_sum
 
@@ -154,7 +174,5 @@ camera_name = cam.DeviceInfo.GetUserDefinedName()
 print(f"connected to {camera_name} camera")
 
 initialize_cam(cam, camera_name)
-
-cap = cv2.VideoCapture('input.mp4')
 
 BackgroundLoop(cam)
