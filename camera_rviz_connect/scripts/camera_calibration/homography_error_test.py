@@ -12,7 +12,7 @@ z = 20 # distance of the object
 d = 10 # distance of homography plane
 t = np.array([0,0.05,0]) # translation between cameras
 
-x,y = 100,200 # point on the narrow angle camera frame
+x,y = 0.5,0.5 # point on the narrow angle camera frame
 
 X = np.array([x,y,1])
 
@@ -22,23 +22,33 @@ k_narrow = np.loadtxt(narrow_cam_details_file, dtype=float, skiprows=camera_matr
 k_wide = np.loadtxt(wide_cam_details_file, dtype=float, skiprows=camera_matrix_raw-1, max_rows=3, delimiter=' ') # camera matrix
 k_narrow_inv = np.linalg.inv(k_narrow) 
 
-errors = []
-for z in range (1,50,1):
+coords = []
+coords.append(X)
+all_errors = []
+def get_error_arr(coord):
+    X = coord
+    errors = []
+    for z in range (1,50,1):
 
-    p_d = 1/z + ((n_trans.dot(k_narrow_inv)).dot(X))/d
-    e = k_wide.dot(t)
-    error = p_d*e
-    errors.append(error[1])
+        p_d = 1/z + ((n_trans.dot(k_narrow_inv)).dot(X))/d
+        e = k_wide.dot(t)
+        print("e=",e)
+        print('p_d=',p_d)
+        error = p_d*e
+        errors.append(error[1])
+    return errors
 
+for i in coords:
+    all_errors.append(get_error_arr(i))
 
 # print('p_d',p_d)
 # print('e=',e)
 # print('error',error)
-print(errors)
+# print(all_errors[0])
 # print(p_d-1/z)
 # print(1/z)
 xx = [i for i in range(1,50)]
-plt.plot(xx, errors)
+plt.plot(xx, all_errors[0])
 plt.xlabel('distance')
 plt.ylabel('error')
 plt.show()
