@@ -14,9 +14,10 @@ import os
 width = 1080
 height = 1920
 fps = 30
-narrow_AutoExposureTimeUpperLimit = 50000
+narrow_AutoExposureTimeUpperLimit = 1000
 wide_AutoExposureTimeUpperLimit = 1000
 quality_factor = 30
+
 should_feed_video = False
 should_visualize = True
 should_filter = True
