@@ -68,8 +68,8 @@ int main()
             class_names.push_back(line);
     }
 
-    cv::VideoCapture source("/home/fyp/Desktop/02-12-2021_16-11_narrow_cam.mp4");
-    cv::VideoCapture source2("/home/fyp/Desktop/02-12-2021_16-11_wide_cam.mp4");
+    cv::VideoCapture source2("/media/fyp/sdCard/videos/29-12-2021_12-48_narrow_cam.mp4");
+    cv::VideoCapture source("/media/fyp/sdCard/videos/29-12-2021_12-48_wide_cam.mp4");
 
     auto net = cv::dnn::readNetFromDarknet("/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/yolov4-custom.cfg", "/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/weights/yolov4-custom_last.weights");
     net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
