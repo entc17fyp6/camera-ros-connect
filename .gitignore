@@ -25,3 +25,8 @@ CATKIN_IGNORE
 *.pdf
 *.weights
 *.pth
+
+## do not ignore
+!/images/*
+!/camera_rviz_connect/scripts/narrow.jpg
+!/camera_rviz_connect/scripts/wide.jpg
