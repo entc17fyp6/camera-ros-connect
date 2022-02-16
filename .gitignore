@@ -25,6 +25,7 @@ CATKIN_IGNORE
 *.pdf
 *.weights
 *.pth
+*.o
 
 ## do not ignore
 !/images/*
