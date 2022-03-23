@@ -2,14 +2,14 @@ import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
 
-find_homograpy = True
+find_homograpy = False
 
 MIN_MATCH_COUNT = 10
-narrow_calibration_img = cv.imread('narrow_rectified_2.jpg',0)          # queryImage
-wide_calibration_img = cv.imread('wide_rectified_2.jpg',0) # trainImage
+narrow_calibration_img = cv.imread('narrow_t1_018.jpg',0)          # queryImage
+wide_calibration_img = cv.imread('wide_t1_018.jpg',0) # trainImage
 
-narrow_img_color = cv.cvtColor(cv.imread('narrow_rectified_2.jpg'),cv.COLOR_BGR2RGB)          # queryImage
-wide_img_color = cv.cvtColor(cv.imread('wide_rectified_2.jpg'),cv.COLOR_BGR2RGB) # trainImage
+narrow_img_color = cv.cvtColor(cv.imread('narrow_t1_018.jpg'),cv.COLOR_BGR2RGB)          # queryImage
+wide_img_color = cv.cvtColor(cv.imread('wide_t1_018.jpg'),cv.COLOR_BGR2RGB) # trainImage
 
 def calc_homograpy(narrow_img, wide_img, MIN_MATCH_COUNT):
 

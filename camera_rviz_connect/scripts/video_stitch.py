@@ -13,8 +13,10 @@ wide_cam_vid_start_time = 1000  ## ms
 
 # wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_wide_cam.mp4')
 # narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_24\\traffic_light\\24-12-2021_06-51_narrow_cam.mp4')
-wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_wide_cam.mp4')
-narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_narrow_cam.mp4')
+wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\27-02-2022_11-28_wide_cam.mp4')
+narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\27-02-2022_11-28_narrow_cam.mp4')
+# wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_wide_cam.mp4')
+# narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_26\\normal\\26-12-2021_09-42_narrow_cam.mp4')
 # wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_wide_cam.mp4')
 # narrow_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos_12_25\\normal\\25-12-2021_08-59_narrow_cam.mp4')
 # wide_cap = cv2.VideoCapture('D:\\ACA\\fyp\\beslar_cameras\\camera-ros-connect\\camera_rviz_connect\\scripts\\test_camera\\videos\\29-12-2021_12-41_wide_cam.mp4')

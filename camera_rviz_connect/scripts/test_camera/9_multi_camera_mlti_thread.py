@@ -12,16 +12,18 @@ should_save_video = True
 
 width = 1080
 height = 1920
-fps = 5
+fps = 30
 quality = '25'
 PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
-wide_AutoExposureTimeUpperLimit = 200000
-narrow_AutoExposureTimeUpperLimit = 200000
+wide_AutoExposureTimeUpperLimit = 300
+narrow_AutoExposureTimeUpperLimit = 300
 
 
 tlf = py.TlFactory.GetInstance()
 devices = tlf.EnumerateDevices()
 cam_count = len(devices)
+
+filled_buffer = [False]*cam_count
 
 for d in devices:
     print(d.GetModelName(), d.GetUserDefinedName())
@@ -272,14 +274,22 @@ class FFMPEG_VideoWriter:
         self.close()
 
 def save_video(frame,cam_id):
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+    global filled_buffer
+    if (filled_buffer[cam_id]==False):
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+        filled_buffer[cam_id] = True
 
-    if (should_save_video):
-        writer_dict[str(cam_id)].write_frame(frame)
-    else:
-        cv2.namedWindow(str(cam_id))
-        cv2.imshow(str(cam_id), frame)
-        cv2.waitKey(1)
+        if (should_save_video):
+            writer_dict[str(cam_id)].write_frame(frame)
+
+        else:   ## visualize if does not save
+            cv2.namedWindow(str(cam_id))
+            cv2.imshow(str(cam_id), frame)
+            cv2.waitKey(1)
+
+        if (filled_buffer == [True]*cam_count):
+            filled_buffer = [False]*cam_count
+
     return
 
 
