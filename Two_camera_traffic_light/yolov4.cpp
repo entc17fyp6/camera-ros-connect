@@ -31,7 +31,7 @@ int main()
 {
     std::vector<std::string> class_names;
     {
-        std::ifstream class_file("classes.txt");
+        std::ifstream class_file("/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/classes.txt");
         if (!class_file)
         {
             std::cerr << "failed to open classes.txt\n";
@@ -43,9 +43,9 @@ int main()
             class_names.push_back(line);
     }
 
-    cv::VideoCapture source("/home/fyp2selfdriving/Documents/traffic_light/yolov4/darknet/video/traffic_lights.mp4");
+    cv::VideoCapture source("/media/fyp/sdCard/videos/29-12-2021_12-48_narrow_cam.mp4");
 
-    auto net = cv::dnn::readNetFromDarknet("/home/fyp2selfdriving/Documents/traffic_light/yolov4/darknet/cfg/yolov4-custom.cfg", "/home/fyp2selfdriving/Documents/traffic_light/yolov4/training/yolov4-custom_best.weights");
+    auto net = cv::dnn::readNetFromDarknet("/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/yolov4-custom.cfg", "/home/fyp/Documents/camera-ros-connect/Two_camera_traffic_light/weights/yolov4-custom_last.weights");
     net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA_FP16);
     // net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
@@ -54,17 +54,20 @@ int main()
 
     cv::Mat frame, blob;
     std::vector<cv::Mat> detections;
+    std::vector<cv::Mat> samples(1);
     while(cv::waitKey(1) < 1)
     {
+        frame = 0;
         source >> frame;
+        samples[0] = frame;
         if (frame.empty())
         {
             cv::waitKey();
             break;
         }
-        
+
         auto total_start = std::chrono::steady_clock::now();
-        cv::dnn::blobFromImages(frame, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
+        cv::dnn::blobFromImages(samples, blob, 0.00392, cv::Size(608, 608), cv::Scalar(), true, false, CV_32F);
         net.setInput(blob);
 
         auto dnn_start = std::chrono::steady_clock::now();
