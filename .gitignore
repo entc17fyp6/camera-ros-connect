@@ -28,6 +28,8 @@ CATKIN_IGNORE
 *.weights
 *.pth
 *.o
+*narrow.tar.gz
+*wide.tar.gz
 
 ## do not ignore
 !/images/*
