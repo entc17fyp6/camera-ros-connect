@@ -23,11 +23,15 @@ CATKIN_IGNORE
 *.jpg
 *.png
 *.pdf
+*.log
+*.gz
 *.weights
 *.pth
 *.o
+*narrow.tar.gz
+*wide.tar.gz
 
 ## do not ignore
 !/images/*
-!/camera_rviz_connect/scripts/narrow.jpg
-!/camera_rviz_connect/scripts/wide.jpg
+# !/camera_rviz_connect/scripts/narrow.jpg
+# !/camera_rviz_connect/scripts/wide.jpg
