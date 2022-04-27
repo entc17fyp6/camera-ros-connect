@@ -10,7 +10,7 @@ NAME       ?= test
 # Installation directories for pylon
 PYLON_ROOT ?= /media/fyp/sdCard/pylon
 CV_ROOT ?=  /media/fyp/sdCard/cv2_build/cv2_build
-
+	
 # Build tools and flags
 LD         := $(CXX)
 CPPFLAGS   := $(shell $(PYLON_ROOT)/bin/pylon-config --cflags)

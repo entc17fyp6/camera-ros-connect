@@ -22,7 +22,8 @@ uint32_t height = 1080;
 uint8_t fps = 30;
 uint16_t narrow_AutoExposureTimeUpperLimit = 10000;
 uint16_t wide_AutoExposureTimeUpperLimit = 10000;
-String_t PixelFormat = "YCbCr422_8" ;
+String_t PixelFormat = "YCbCr422_8" ;  //YCbCr422_8  BayerGB8
+double AutoGainUpperLimit = 5.0;
 
 intptr_t narrow_cam_id = 0;
 intptr_t wide_cam_id = 1;
@@ -109,6 +110,7 @@ void Initialize_cam(CInstantCamera& camera){
     CEnumParameter (nodemap, "PixelFormat").SetValue(PixelFormat);
     CFloatParameter (nodemap, "AcquisitionFrameRate").SetValue(fps);
     CEnumParameter (nodemap, "ExposureAuto").SetValue("Continuous");
+    CFloatParameter(nodemap, "AutoGainUpperLimit").SetValue(AutoGainUpperLimit);
 
     if (cam_name == "Wide"){
         CFloatParameter(nodemap,"AutoExposureTimeUpperLimit").SetValue(wide_AutoExposureTimeUpperLimit);

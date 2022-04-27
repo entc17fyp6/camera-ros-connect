@@ -20,10 +20,10 @@ using namespace std;
 uint32_t width = 1920;
 uint32_t height = 1080;
 uint8_t fps = 30;
-uint16_t narrow_AutoExposureTimeUpperLimit = 1000;
+uint16_t narrow_AutoExposureTimeUpperLimit = 10000;
 uint16_t wide_AutoExposureTimeUpperLimit = 10000;
-String_t PixelFormat = "YCbCr422_8" ;
-
+String_t PixelFormat = "YCbCr422_8" ;  //YCbCr422_8  BayerGB8
+double AutoGainUpperLimit = 5.0;
 
 void Initialize_cam(CInstantCamera& camera);
 void background_loop(CInstantCamera& camera);
@@ -91,6 +91,8 @@ void Initialize_cam(CInstantCamera& camera){
     CEnumParameter (nodemap, "PixelFormat").SetValue(PixelFormat);
     CFloatParameter (nodemap, "AcquisitionFrameRate").SetValue(fps);
     CEnumParameter (nodemap, "ExposureAuto").SetValue("Continuous");
+    CFloatParameter(nodemap, "AutoGainUpperLimit").SetValue(AutoGainUpperLimit);
+    
 
     if (cam_name == "Wide"){
         CFloatParameter(nodemap,"AutoExposureTimeUpperLimit").SetValue(wide_AutoExposureTimeUpperLimit);
@@ -129,7 +131,6 @@ public:
     }
     void OnImageGrabbed( CInstantCamera& camera, const CGrabResultPtr& ptrGrabResult )
     {
-        cout << "OnImageGrabbed event for device " << camera.GetDeviceInfo().GetUserDefinedName()<< endl;
         cv::Mat image;
         if (ptrGrabResult->GrabSucceeded()){
 

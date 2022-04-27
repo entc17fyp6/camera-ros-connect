@@ -8,15 +8,15 @@ import cv2
 import subprocess as sp
 import os
 
-should_save_video = True
+should_save_video = False
 
 width = 1080
 height = 1920
 fps = 5
 quality = '25'
 PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
-wide_AutoExposureTimeUpperLimit = 200000
-narrow_AutoExposureTimeUpperLimit = 200000
+wide_AutoExposureTimeUpperLimit = 10000
+narrow_AutoExposureTimeUpperLimit = 10000
 
 
 tlf = py.TlFactory.GetInstance()
@@ -272,13 +272,14 @@ class FFMPEG_VideoWriter:
         self.close()
 
 def save_video(frame,cam_id):
+    frame1 = frame
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
 
     if (should_save_video):
         writer_dict[str(cam_id)].write_frame(frame)
     else:
         cv2.namedWindow(str(cam_id))
-        cv2.imshow(str(cam_id), frame)
+        cv2.imshow(str(cam_id), frame1)
         cv2.waitKey(1)
     return
 
