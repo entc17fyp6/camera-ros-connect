@@ -15,8 +15,8 @@ height = 1920
 fps = 30
 quality = '25'
 PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
-wide_AutoExposureTimeUpperLimit = 300
-narrow_AutoExposureTimeUpperLimit = 300
+wide_AutoExposureTimeUpperLimit = 2000
+narrow_AutoExposureTimeUpperLimit = 1000
 
 
 tlf = py.TlFactory.GetInstance()

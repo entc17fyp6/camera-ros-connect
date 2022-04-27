@@ -30,6 +30,8 @@ CATKIN_IGNORE
 *.o
 *narrow.tar.gz
 *wide.tar.gz
+*.mkv
+*.MOV
 
 ## do not ignore
 !/images/*
