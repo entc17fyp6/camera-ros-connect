@@ -8,7 +8,7 @@ import cv2
 import subprocess as sp
 import os
 
-should_save_video = True
+should_save_video = False
 
 width = 1080
 height = 1920

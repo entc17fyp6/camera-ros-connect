@@ -20,7 +20,7 @@ quality_factor = 30
 
 should_feed_video = False
 should_visualize = True
-should_filter = True
+should_filter = False
 
 
 class ffmpeg_filter_class:
@@ -79,9 +79,9 @@ def initialize_cam(cam,camera_name):
     cam.UserSetSelector = 'Default'
     cam.UserSetLoad.Execute()
 
-    # cam.PixelFormat = 'YCbCr422_8'
+    cam.PixelFormat = 'YCbCr422_8'
     # cam.ExposureTime = 200
-    cam.PixelFormat = 'BayerGB8'
+    # cam.PixelFormat = 'BayerGB8'
     cam.ExposureTime = 300
     cam.AcquisitionFrameRate = fps
     # cam.BslBrightness = 0.4
