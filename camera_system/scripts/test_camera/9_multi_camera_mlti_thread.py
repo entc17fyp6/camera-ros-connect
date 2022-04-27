@@ -15,8 +15,8 @@ height = 1920
 fps = 30
 quality = '25'
 PixelFormat = "YCbCr422_8"   ## BayerGB8 YCbCr422_8
-wide_AutoExposureTimeUpperLimit = 10000
-narrow_AutoExposureTimeUpperLimit = 10000
+wide_AutoExposureTimeUpperLimit = 300
+narrow_AutoExposureTimeUpperLimit = 300
 
 
 tlf = py.TlFactory.GetInstance()
@@ -274,17 +274,6 @@ class FFMPEG_VideoWriter:
         self.close()
 
 def save_video(frame,cam_id):
-<<<<<<< HEAD:camera_rviz_connect/scripts/test_camera/9_multi_camera_mlti_thread.py
-    frame1 = frame
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
-
-    if (should_save_video):
-        writer_dict[str(cam_id)].write_frame(frame)
-    else:
-        cv2.namedWindow(str(cam_id))
-        cv2.imshow(str(cam_id), frame1)
-        cv2.waitKey(1)
-=======
     global filled_buffer
     if (filled_buffer[cam_id]==False):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
@@ -301,7 +290,6 @@ def save_video(frame,cam_id):
         if (filled_buffer == [True]*cam_count):
             filled_buffer = [False]*cam_count
 
->>>>>>> da477cb1a686abeeae0171e588f5e34f34125002:camera_system/scripts/test_camera/9_multi_camera_mlti_thread.py
     return
 
 
